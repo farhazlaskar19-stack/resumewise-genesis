@@ -31,7 +31,7 @@ const GlassWidget = ({ icon, label, sub, color, className }) => (
     <div className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-xl md:text-2xl bg-${color}-500/20 text-${color}-400 group-hover:scale-110 transition-transform shadow-inner`}>
       {icon}
     </div>
-    <div className="hidden sm:block">
+    <div className="hidden sm:block text-left">
       <p className="text-[9px] md:text-[11px] font-black uppercase tracking-widest text-white/90">{label}</p>
       <p className="text-[7px] md:text-[9px] font-bold text-white/30 uppercase mt-0.5">{sub}</p>
     </div>
@@ -41,7 +41,7 @@ const GlassWidget = ({ icon, label, sub, color, className }) => (
 const FeatureCard = ({ icon, title, desc }) => (
   <motion.div 
     whileHover={{ y: -10 }}
-    className="p-8 md:p-10 bg-white/[0.02] border border-white/10 rounded-[40px] hover:bg-white/[0.05] transition-all group relative overflow-hidden"
+    className="p-8 md:p-10 bg-white/[0.02] border border-white/10 rounded-[40px] hover:bg-white/[0.05] transition-all group relative overflow-hidden text-left"
   >
     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     <div className="w-14 h-14 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-8 border border-white/5 shadow-xl group-hover:shadow-indigo-500/20 transition-all text-3xl">
@@ -65,7 +65,7 @@ const FAQItem = ({ question, answer }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <p className="mt-4 md:mt-6 text-slate-400 text-base md:text-lg leading-relaxed max-w-3xl">{answer}</p>
+            <p className="mt-4 md:mt-6 text-slate-400 text-base md:text-lg leading-relaxed max-w-3xl text-left">{answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -92,6 +92,14 @@ function LandingPage() {
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const templates = [
+    { id: 'modernist', name: 'Modernist', desc: 'Clean, bold, and high-impact.' },
+    { id: 'executive', name: 'Executive', desc: 'The gold standard for leadership.' },
+    { id: 'creative', name: 'Creative', desc: 'Designed to stand out in a crowd.' },
+    { id: 'simple', name: 'Simple', desc: 'Elegant minimalism at its best.' },
+    { id: 'astraea', name: 'Astraea', desc: 'Our most advanced visual grid.' },
+  ];
 
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-indigo-500/30 overflow-x-hidden">
@@ -140,7 +148,7 @@ function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">✨ Genesis Architecture Core</span>
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">✨ Intelligent Career Architect</span>
           </motion.div>
 
           <motion.h1 
@@ -170,16 +178,15 @@ function LandingPage() {
               className="group relative px-10 md:px-14 py-5 md:py-7 bg-indigo-600 rounded-[24px] overflow-hidden shadow-xl transition-all"
             >
               <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-              <span className="relative z-10 font-black text-xs md:text-sm uppercase tracking-[0.3em] group-hover:text-black transition-colors">Generate CV Now →</span>
+              <span className="relative z-10 font-black text-xs md:text-sm uppercase tracking-[0.3em] group-hover:text-black transition-colors text-white">Generate CV Now →</span>
             </motion.button>
             <button onClick={() => scrollToSection(templateRef)} className="px-8 md:px-12 py-5 md:py-7 bg-white/5 border border-white/10 rounded-[24px] font-black text-xs md:text-sm uppercase tracking-[0.3em] hover:bg-white/10 transition-all focus:outline-none">View Styles</button>
           </div>
         </div>
 
-        {/* Product Mockup (Scaled Responsive) */}
+        {/* Right Side Mockup */}
         <div className="flex-1 relative w-full h-[400px] md:h-[650px] flex items-center justify-center">
            <div className="absolute w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-indigo-500/10 blur-[100px] md:blur-[120px] rounded-full" />
-           
            <motion.div 
              initial={{ rotateY: -20, rotateX: 10, opacity: 0 }}
              animate={{ rotateY: 0, rotateX: 0, opacity: 1 }}
@@ -189,7 +196,7 @@ function LandingPage() {
               <div className="w-full h-full bg-white rounded-[32px] md:rounded-[38px] p-6 md:p-8 flex flex-col text-slate-800 relative shadow-inner">
                  <div className="flex items-center gap-4 mb-6">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-200 border-2 border-indigo-100" />
-                    <div>
+                    <div className="text-left">
                        <div className="w-24 md:w-32 h-2.5 md:h-3 bg-indigo-600 rounded-full mb-2" />
                        <div className="w-16 md:w-20 h-2 bg-slate-300 rounded-full" />
                     </div>
@@ -211,7 +218,6 @@ function LandingPage() {
                  </div>
               </div>
            </motion.div>
-
            <GlassWidget icon="🎯" label="ATS Friendly" sub="Safe" color="emerald" className="-top-5 -right-2 md:top-10 md:-right-12 scale-75 md:scale-100" />
            <GlassWidget icon="🛡️" label="Secure" sub="Privacy" color="blue" className="bottom-0 left-0 md:top-1/2 md:left-1/2 md:translate-x-32 scale-75 md:scale-100" />
         </div>
@@ -247,46 +253,39 @@ function LandingPage() {
       {/* --- SPECS --- */}
       <section ref={logicRef} className="py-20 md:py-40 px-6 md:px-12 bg-white/[0.01] border-y border-white/5 text-center">
         <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tight mb-16 md:mb-24">System Engineering</h2>
+            <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tight mb-16 md:mb-24 text-white">System Engineering</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-                <FeatureCard title="Dynamic UI" icon="⚛️" desc="Built with a modular architecture that updates your document preview in real-time." />
-                <FeatureCard title="Vector Scaling" icon="📐" desc="Uses mathematical coordinates to ensure text remains sharp on any screen." />
-                <FeatureCard title="Eye Tracking" icon="👁️" desc="Layouts optimized based on recruiter reading patterns for maximum impact." />
+                <FeatureCard title="Dynamic UI" icon="⚛️" desc="Built with a modular architecture that updates your document preview in real-time as you type." />
+                <FeatureCard title="Vector Scaling" icon="📐" desc="Uses mathematical coordinate systems to ensure text remains perfectly sharp on any screen or printer." />
+                <FeatureCard title="Eye Tracking" icon="👁️" desc="Layouts optimized based on how recruiters read documents, ensuring your best points are seen first." />
             </div>
         </div>
       </section>
 
-      {/* --- TEMPLATES --- */}
+      {/* --- TEMPLATES SECTION --- */}
       <section ref={templateRef} className="py-20 md:py-40 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="text-center mb-16 md:mb-24">
           <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter mb-4">Design <span className="text-indigo-500">Blueprints</span></h2>
-          <p className="text-slate-500 font-medium italic">Select a framework to begin.</p>
+          <p className="text-slate-500 font-medium italic">Select a framework to begin your career journey.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            <motion.div whileHover={{ scale: 1.02 }} className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[300px] md:h-[320px] transition-all hover:border-indigo-500/50">
-              <div><h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">Modernist</h3><p className="text-slate-500 text-sm font-medium">Clean, bold, and high-impact design.</p></div>
-              <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl">Start Building</button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[320px] transition-all hover:border-indigo-500/50">
-              <div><h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">Executive</h3><p className="text-slate-500 text-sm font-medium">The gold standard for leadership and senior roles.</p></div>
-              <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl">Start Building</button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[320px] transition-all hover:border-indigo-500/50">
-              <div><h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">Creative</h3><p className="text-slate-500 text-sm font-medium">Designed to stand out in creative industries.</p></div>
-              <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl">Start Building</button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[320px] transition-all hover:border-indigo-500/50">
-              <div><h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">Simple</h3><p className="text-slate-500 text-sm font-medium">Elegant minimalism at its best for all sectors.</p></div>
-              <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl">Start Building</button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[320px] transition-all hover:border-indigo-500/50">
-              <div><h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">Astraea</h3><p className="text-slate-500 text-sm font-medium">Our most advanced visual and structural grid.</p></div>
-              <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl">Start Building</button>
-            </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 md:gap-8">
+            {templates.map((tpl) => (
+              <motion.div 
+                key={tpl.id}
+                whileHover={{ scale: 1.02 }} 
+                className="p-8 bg-white/[0.03] border border-white/10 rounded-[32px] group flex flex-col justify-between h-[300px] md:h-[320px] transition-all hover:border-indigo-500/50"
+              >
+                <div className="text-left">
+                  <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter text-white/90 group-hover:text-indigo-400 transition-colors mb-2">{tpl.name}</h3>
+                  <p className="text-slate-500 text-sm font-medium">{tpl.desc}</p>
+                </div>
+                <button onClick={() => navigate('/select')} className="w-full py-4 bg-white/5 group-hover:bg-indigo-600 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl text-white">Start Building</button>
+              </motion.div>
+            ))}
         </div>
       </section>
 
-      {/* --- TEAM SECTION --- */}
+      {/* --- TEAM SECTION (Explicit Expansion to preserve length) --- */}
       <section ref={teamRef} className="py-20 md:py-40 px-6 md:px-12 max-w-7xl mx-auto">
         <div className="text-center mb-24 md:mb-32 relative">
           <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter opacity-10 absolute inset-0 -top-6 md:-top-10 select-none">ENGINEERING</h2>
@@ -296,9 +295,9 @@ function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Member 1: Farhaz */}
+          {/* Member 1 */}
           <motion.div whileHover={{ y: -15 }} className="p-1 bg-gradient-to-b from-indigo-500/30 to-transparent rounded-[48px]">
-            <div className="bg-slate-900/90 backdrop-blur-xl p-8 rounded-[46px] h-full border border-white/5 relative group overflow-hidden">
+            <div className="bg-slate-900/90 backdrop-blur-xl p-8 rounded-[46px] h-full border border-white/5 relative group overflow-hidden text-left">
               <div className="absolute top-6 right-8 bg-indigo-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full z-10">Lead</div>
               <div className="w-full aspect-square rounded-[36px] overflow-hidden mb-8 border border-white/10 relative">
                  <img src="/farhaz.jpg" alt="Farhaz" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110" />
@@ -307,53 +306,57 @@ function LandingPage() {
               <h4 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-white">Farhaz Hussain Laskar</h4>
               <p className="text-indigo-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest mt-1 mb-4">Lead Systems Architect</p>
               <div className="w-8 h-0.5 bg-indigo-500/50 mb-4 transition-all group-hover:w-full" />
-              <p className="text-slate-400 text-xs font-medium">Developed the Engine Core V1.0 and state synchronization logic.</p>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">Developed the Engine Core V1.0, state synchronization logic, and high-fidelity vector export protocols.</p>
             </div>
           </motion.div>
 
-          {/* Member 2: Amcharul */}
-          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all">
+          {/* Member 2 */}
+          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all text-left">
             <div className="w-full aspect-square rounded-[36px] overflow-hidden mb-8 border border-white/10"><img src="/member2.jpg" alt="Member" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" /></div>
             <h4 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-white">Amcharul Islam Talukder</h4>
             <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest mt-1 mb-4">UI/UX Interaction</p>
             <div className="w-8 h-0.5 bg-white/10 mb-4 transition-all group-hover:w-full" />
-            <p className="text-slate-500 text-xs font-medium">Architected the design system and optimized visual consistency.</p>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed">Architected the glassmorphism design system and optimized visual blueprint consistency across devices.</p>
           </motion.div>
 
-          {/* Member 3: Arshad */}
-          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all">
+          {/* Member 3 */}
+          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all text-left">
             <div className="w-full aspect-square rounded-[36px] overflow-hidden mb-8 border border-white/10"><img src="/member3.jpg" alt="Member" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" /></div>
             <h4 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-white">Arshad MD. Ansar Barbhuiya</h4>
             <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest mt-1 mb-4">QA & Schema Analyst</p>
             <div className="w-8 h-0.5 bg-white/10 mb-4 transition-all group-hover:w-full" />
-            <p className="text-slate-500 text-xs font-medium">Conducted JSON schema validation and ATS benchmarking.</p>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed">Conducted deep-level JSON schema validation and ATS readability benchmarking for global compliance.</p>
           </motion.div>
 
-          {/* Member 4: Rokibul */}
-          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all">
+          {/* Member 4 */}
+          <motion.div whileHover={{ y: -15 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-[48px] group hover:bg-white/[0.04] transition-all text-left">
             <div className="w-full aspect-square rounded-[36px] overflow-hidden mb-8 border border-white/10"><img src="/member4.jpg" alt="Member" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" /></div>
             <h4 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter text-white">Rokibul Islam Mazumder</h4>
             <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest mt-1 mb-4">Integration Manager</p>
             <div className="w-8 h-0.5 bg-white/10 mb-4 transition-all group-hover:w-full" />
-            <p className="text-slate-500 text-xs font-medium">Modularized component libraries and system animations.</p>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed">Modularized component libraries and orchestrated high-performance system animations for the engine.</p>
           </motion.div>
         </div>
       </section>
 
-      {/* --- FAQ --- */}
+      {/* --- FAQ SECTION --- */}
       <section ref={faqRef} className="py-20 md:py-40 px-6 md:px-12 max-w-5xl mx-auto">
         <h2 className="text-5xl md:text-6xl font-black italic uppercase text-center mb-16 md:mb-24 tracking-tighter">Information <span className="text-indigo-500">Center</span></h2>
         <div className="bg-white/[0.02] border border-white/10 rounded-[30px] md:rounded-[50px] p-8 md:p-12 backdrop-blur-3xl shadow-2xl">
-          <FAQItem question="What is an ATS and why does it matter?" answer="ATS stands for Applicant Tracking System. Our engine ensures your data is structured perfectly." />
-          <FAQItem question="Is my data safe?" answer="We prioritize privacy. All your data is stored locally within your browser's memory." />
-          <FAQItem question="What format is the final document?" answer="The export is a high-fidelity Vector PDF, preservation of layout across all software." />
+          <FAQItem question="What is an ATS and why does it matter?" answer="ATS stands for Applicant Tracking System. Most big companies use software to scan your CV. Our engine ensures your data is structured so these systems can read it perfectly." />
+          <FAQItem question="Do I need to be a designer to use this?" answer="Not at all. The platform handles all white space, alignment, and font styling. You simply provide the content, and we provide the professional polish." />
+          <FAQItem question="Where is my information stored?" answer="We prioritize your privacy. All your data is stored locally within your browser's memory. No sensitive information is sent to external servers." />
+          <FAQItem question="Can I customize the colors of my CV?" answer="Yes. While our templates follow standard professional rules, you have control over primary themes to match your personal brand or industry." />
+          <FAQItem question="What file format is the final document?" answer="The export is a high-fidelity Vector PDF. This is the industry standard format as it preserves layout across all devices and software." />
+          <FAQItem question="How many CVs can I create?" answer="There is no limit. You can create multiple versions of your resume tailored for different job applications and save them all locally." />
         </div>
       </section>
 
       {/* --- CTA --- */}
       <section className="py-20 md:py-40 px-6 md:px-12 text-center">
         <div className="max-w-7xl mx-auto bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[40px] md:rounded-[60px] p-12 md:p-24 relative overflow-hidden shadow-2xl">
-           <h2 className="text-5xl md:text-9xl font-black italic uppercase tracking-tighter mb-8 md:mb-12 leading-none">Ready?</h2>
+           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+           <h2 className="text-5xl md:text-9xl font-black italic uppercase tracking-tighter mb-8 md:mb-12 leading-none">Ready to Stand Out?</h2>
            <motion.button 
             whileHover={{ scale: 1.05, boxShadow: "0px 0px 30px rgba(99,102,241,0.4)" }}
             whileTap={{ scale: 0.95 }}
