@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  /* 1. Hide UI elements */
+  button, .no-print, .fixed, .absolute, nav, .scrollbar-hide {
+    display: none !important;
+  }
+
+  /* 2. Reset Page and Body */
+  @page {
+    margin: 0 !important;
+    size: A4;
+  }
+  
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm;
+  }
+
+  /* 3. Force Layout to be Broad (Full Width) */
+  .flex-1 {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* 4. Ensure colors and sidebar width are respected */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* This forces the Flex container to stay 210mm wide in PDF */
+  .print-master-container {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    page-break-after: always;
+  }
+}
