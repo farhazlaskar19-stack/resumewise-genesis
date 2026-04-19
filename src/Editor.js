@@ -411,7 +411,7 @@ function Editor() {
             <div className="w-full flex-1 flex flex-col items-center py-12 md:py-20 animate-in fade-in duration-1000">
                <div className="mb-12 flex flex-col items-center gap-4 no-print">
                  <h3 className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.5em] animate-pulse text-center">Generation Complete</h3>
-                 <h2 className="text-2xl sm:text-3xl font-black text-white italic text-center px-4">Your Masterpiece is Ready.</h2>
+                 <h2 className="text-2xl sm:text-3xl font-black text-white italic text-center px-4">Your Resume is Ready.</h2>
                </div>
 
                <div className="printable-resume w-[210mm] scale-[0.45] sm:scale-[0.7] md:scale-[0.95] lg:scale-100 bg-white mb-32 origin-top transition-all duration-700" 
