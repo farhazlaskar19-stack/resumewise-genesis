@@ -192,6 +192,15 @@ function Editor() {
       <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${saveStatus ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
         ✨ Progress Saved
       </div>
+      {/* Mobile Toggle Button (Fix: Added missing button) */}
+      {!showFinal && (
+        <button 
+          onClick={() => setIsMobilePreview(!isMobilePreview)}
+          className="lg:hidden fixed bottom-32 right-6 z-[150] w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform"
+        >
+          <span className="text-xl">{isMobilePreview ? '✎' : '👁️'}</span>
+        </button>
+      )}
 
       <div className="flex flex-1 overflow-hidden h-full">
         
@@ -363,7 +372,7 @@ function Editor() {
                     ))}
                   </div>
                </div>
-               <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.35] sm:scale-[0.45]' : 'w-[210mm] scale-[0.6]'} origin-top ring-1 ring-white/10 shadow-[0_0_120px_rgba(0,0,0,0.9)]`} style={{minHeight: '297mm'}}>
+               <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.4] sm:scale-[0.55]' : 'w-[210mm] scale-[0.6]'} origin-top ring-1 ring-white/10 shadow-[0_0_120px_rgba(0,0,0,0.9)]`} style={{minHeight: '297mm'}}>
                  <div className="print:m-0 h-full">
                    {template === 'executive' && <ExecutiveTemplate data={data} />}
                    {template === 'modernist' && <ModernistTemplate data={data} />}
@@ -381,7 +390,7 @@ function Editor() {
                  <h2 className="text-2xl sm:text-3xl font-black text-white italic text-center px-4">Your Masterpiece is Ready.</h2>
                </div>
 
-               <div className="printable-resume w-[210mm] scale-[0.4] sm:scale-[0.6] md:scale-[0.85] lg:scale-100 bg-white mb-32 origin-top transition-all duration-700" 
+               <div className="printable-resume w-[210mm] scale-[0.45] sm:scale-[0.7] md:scale-[0.95] lg:scale-100 bg-white mb-32 origin-top transition-all duration-700" 
                  style={{
                    minHeight: '297mm', 
                    boxShadow: '0 50px 100px -20px rgba(0,0,0,0.9), 0 0 50px -10px rgba(99,102,241,0.2)'
