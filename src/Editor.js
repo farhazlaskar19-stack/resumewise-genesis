@@ -17,9 +17,9 @@ const SuccessMark = ({ show }) => (
 
 // --- COMMERCIAL GRADE INPUT ---
 const PremiumInput = ({ label, value, required, error, ...props }) => (
-  <div className="flex flex-col gap-2 flex-1 min-w-[280px] group">
-    <label className="text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">{label}</label>
-    <div className={`flex items-center px-4 py-3.5 bg-slate-900/40 border transition-all duration-300 rounded-xl focus-within:bg-slate-800 ${error ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : value ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-white/10'} focus-within:border-indigo-500`}>
+  <div className="flex flex-col gap-2 flex-1 min-w-full sm:min-w-[280px] group">
+    <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">{label}</label>
+    <div className={`flex items-center px-4 py-3 sm:py-3.5 bg-slate-900/40 border transition-all duration-300 rounded-xl focus-within:bg-slate-800 ${error ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : value ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-white/10'} focus-within:border-indigo-500`}>
       <input 
         {...props} 
         value={value}
@@ -38,14 +38,14 @@ function Editor() {
   const [resumeScore, setResumeScore] = useState(0);
   const [isMobilePreview, setIsMobilePreview] = useState(false);
   const [saveStatus, setSaveStatus] = useState(false);
-  const [errors, setErrors] = useState([]); // This was causing the loop, now handled carefully
+  const [errors, setErrors] = useState([]); 
 
   const [template, setTemplate] = useState(() => {
     const params = new URLSearchParams(location.search);
     return params.get('template') || 'executive'; 
   });
   
-  const [config, setConfig] = useState({ font: 'Inter', spacing: 1.5, size: 14 });
+  const [config] = useState({ font: 'Inter', spacing: 1.5, size: 14 });
 
   const initialData = {
     firstName: '', lastName: '', role: '', email: '', phone: '', address: '', city: '', country: '', postCode: '', photo: null,
@@ -71,16 +71,16 @@ function Editor() {
       firstName: 'Samantha', lastName: 'Williams', role: 'Senior Product Designer',
       email: 's.williams@design.com', phone: '+1 (555) 0123', address: '123 Innovation Drive',
       city: 'San Francisco', country: 'USA', postCode: '94103', photo: null,
-      summary: 'Award-winning Product Designer with over 8 years of experience in creating user-centric digital experiences. Expert in design systems, high-fidelity prototyping, and cross-functional team leadership.',
-      hardSkills: [{ name: 'UI/UX Design', level: 95 }, { name: 'React Architecture', level: 85 }, { name: 'Figma Systems', level: 100 }],
-      experience: [{ company: 'TechNova Systems', role: 'Lead Designer', location: 'Remote', startDate: '2020', endDate: '', isPresent: true, desc: 'Directed the design overhaul of the flagship SaaS platform, resulting in a 40% increase in user retention.' }],
+      summary: 'Award-winning Product Designer with over 8 years of experience in creating user-centric digital experiences.',
+      hardSkills: [{ name: 'UI/UX Design', level: 95 }, { name: 'React Architecture', level: 85 }],
+      experience: [{ company: 'TechNova Systems', role: 'Lead Designer', location: 'Remote', startDate: '2020', endDate: '', isPresent: true, desc: 'Directed the design overhaul.' }],
       education: [{ school: 'Stanford University', degree: 'B.Sc. Digital Design', field: 'Design', location: 'CA', startDate: '2012', endDate: '2016', gpa: '3.9' }],
-      languages: [{ name: 'English', level: 'Native' }, { name: 'German', level: 'B2' }],
+      languages: [{ name: 'English', level: 'Native' }],
       socials: [{ title: 'LinkedIn', url: 'linkedin.com/in/samantha' }],
-      certifications: [{ title: 'Google UX Design Professional', issuer: 'Coursera' }],
-      awards: [{ title: 'Design Excellence 2023', year: '2023' }],
-      projects: [{ title: 'EcoTrack App', link: 'github.com/ecotrack', desc: 'A sustainability tracking app built with React Native and Node.js.' }],
-      customSections: [{ title: 'Key Competencies', content: 'Design Sprints • User Research • A/B Testing • Stakeholder Management' }]
+      certifications: [{ title: 'Google UX Design', issuer: 'Coursera' }],
+      awards: [{ title: 'Design Excellence', year: '2023' }],
+      projects: [{ title: 'EcoTrack', link: 'github.com/ecotrack', desc: 'Sustainability app.' }],
+      customSections: [{ title: 'Skills', content: 'Design Sprints • User Research' }]
     };
     setData(sample);
     setSaveStatus(true);
@@ -88,23 +88,21 @@ function Editor() {
   };
 
   const resetData = () => {
-    if(window.confirm("Are you sure you want to clear all data?")) {
+    if(window.confirm("Are you sure?")) {
       setData(initialData);
       localStorage.removeItem('pro_cv_complete_v5_final');
       setStep(1);
-      setErrors([]);
     }
   };
 
   const steps = [
-    { id: 1, label: 'Contacts', desc: 'Add your up-to-date contact information so employers and recruiters can easily reach you.' },
-    { id: 2, label: 'Experience', desc: 'Detail your professional journey and key achievements to showcase your impact.' },
-    { id: 3, label: 'Education', desc: 'List your academic foundation, degrees, and relevant certifications.' },
-    { id: 4, label: 'Skills', desc: 'Highlight your technical expertise and core proficiencies.' },
-    { id: 5, label: 'Finalize', desc: 'Add portfolio links, awards, and custom sections to complete your profile.' },
+    { id: 1, label: 'Contacts', desc: 'Add your contact info so recruiters can reach you.' },
+    { id: 2, label: 'Experience', desc: 'Detail your professional journey.' },
+    { id: 3, label: 'Education', desc: 'List your academic foundation.' },
+    { id: 4, label: 'Skills', desc: 'Highlight your technical expertise.' },
+    { id: 5, label: 'Finalize', desc: 'Add custom sections and links.' },
   ];
 
-  // FIX: This now returns a value instead of setting state directly in the render cycle
   const handleNextStep = () => {
     let newErrors = [];
     if (step === 1) {
@@ -112,17 +110,9 @@ function Editor() {
       if (!data.lastName) newErrors.push('lastName');
       if (!data.email) newErrors.push('email');
     }
-    
     setErrors(newErrors);
-
     if (newErrors.length === 0) {
-       if (step === 5) {
-         setShowFinal(true);
-       } else {
-         setStep(s => s + 1);
-       }
-    } else {
-       alert("Mandatory data required to proceed");
+       step === 5 ? setShowFinal(true) : setStep(s => s + 1);
     }
   };
 
@@ -130,7 +120,7 @@ function Editor() {
     let score = 0;
     if (data.firstName) score += 10;
     if (data.photo) score += 10;
-    if (data.summary && data.summary.length > 20) score += 10;
+    if (data.summary?.length > 20) score += 10;
     if (data.experience.some(e => e.company)) score += 20;
     if (data.education.some(e => e.school)) score += 20;
     if (data.hardSkills.some(s => s.name)) score += 20;
@@ -148,15 +138,6 @@ function Editor() {
     link.click();
   };
 
-  const handleRestore = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setData(JSON.parse(event.target.result));
-      reader.readAsText(file);
-    }
-  };
-
   const updateList = (section, index, field, value) => {
     const updated = [...data[section]];
     updated[index][field] = value;
@@ -172,7 +153,7 @@ function Editor() {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => { setData({ ...data, photo: event.target.result }); };
+      reader.onload = (event) => setData({ ...data, photo: event.target.result });
       reader.readAsDataURL(file);
     }
   };
@@ -182,62 +163,71 @@ function Editor() {
       
       <style>{`
         @media print {
-          body { background: white !important; margin: 0 !important; }
+          @page { size: A4; margin: 0 !important; }
+          body { 
+            background: white !important; margin: 0 !important; padding: 0 !important; 
+            width: 210mm !important; height: 297mm !important; 
+            -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; 
+          }
           body * { visibility: hidden; }
           .printable-resume, .printable-resume * { visibility: visible; }
-          .printable-resume { position: fixed !important; left: 0 !important; top: 0 !important; width: 210mm !important; height: 297mm !important; transform: scale(1) !important; border: none !important; box-shadow: none !important; }
+          .printable-resume { 
+            position: absolute !important; left: 0 !important; top: 0 !important; 
+            margin: 0 !important; padding: 0 !important; 
+            width: 210mm !important; height: 297mm !important; 
+            transform: scale(1) !important; transform-origin: top left !important; 
+            border: none !important; box-shadow: none !important; overflow: hidden !important; 
+          }
           .no-print { display: none !important; }
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .stage-pattern {
+          background-color: #020617;
+          background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+          background-size: 40px 40px;
+        }
       `}</style>
 
-      <div className={`fixed top-6 right-6 z-[200] px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 shadow-xl shadow-emerald-500/20 ${saveStatus ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
+      {/* Save Notification */}
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${saveStatus ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
         ✨ Progress Saved
       </div>
 
-      <button 
-        onClick={() => setIsMobilePreview(!isMobilePreview)}
-        className="lg:hidden fixed bottom-32 right-6 z-[150] w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform"
-      >
-        <span className="text-xl">{isMobilePreview ? '✎' : '👁️'}</span>
-      </button>
-
-      <header className={`h-20 bg-slate-900/95 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-6 md:px-12 z-[100] shrink-0 no-print transition-transform duration-700 ${showFinal ? '-translate-y-full' : 'translate-y-0'}`}>
-         <div className="flex items-center gap-2 md:gap-4">
-            <button onClick={() => navigate('/')} className="text-white/40 hover:text-white transition-all text-[10px] md:text-xs font-bold uppercase tracking-widest mr-2 md:mr-4">← Exit</button>
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-xs md:text-sm italic shadow-lg">V7</div>
-            <h1 className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] md:tracking-[0.3em]">Elite <span className="text-indigo-400">Engine</span></h1>
-         </div>
-         <div className="flex items-center gap-4 md:gap-10">
-            <div className="flex flex-col items-end">
-              <span className="text-[8px] md:text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">{resumeScore}% Strength</span>
-              <div className="w-20 md:w-32 h-1 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{width: `${resumeScore}%`}}></div>
-              </div>
-            </div>
-         </div>
-      </header>
-
       <div className="flex flex-1 overflow-hidden h-full">
+        
         {/* LEFT COLUMN: FORM */}
-        <div className={`relative flex flex-col h-full transition-all duration-700 no-print 
-          ${showFinal ? 'w-0 opacity-0' : 'lg:w-[50%] w-full'} 
-          ${isMobilePreview ? 'hidden lg:flex' : 'flex'} border-r border-white/5 bg-[#020617]`}>
+        <div className={`relative flex flex-col h-full transition-all duration-700 no-print ${showFinal ? 'w-0 opacity-0' : 'lg:w-[50%] w-full'} ${isMobilePreview ? 'hidden lg:flex' : 'flex'} border-r border-white/5 bg-[#020617]`}>
           
-          <div className="px-6 md:px-12 pt-6 md:pt-10 pb-6 bg-gradient-to-b from-white/[0.02] to-transparent shrink-0">
+          <div className="px-6 md:px-12 pt-10 pb-6 shrink-0 bg-[#020617]/80 backdrop-blur-md">
+            <button onClick={() => navigate('/')} className="mb-8 flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all">
+                <span className="text-indigo-400">←</span> EXIT ENGINE
+            </button>
+
             <div className="flex items-center justify-between gap-2 md:gap-3 mb-6 md:mb-8">
               {steps.map((s) => (
-                <div key={s.id} onClick={() => s.id <= step && setStep(s.id)} className={`flex-1 h-1 md:h-1.5 rounded-full transition-all duration-500 ${step >= s.id ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'bg-white/5'} cursor-pointer`} />
+                <div key={s.id} onClick={() => s.id <= step && setStep(s.id)} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${step >= s.id ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'bg-white/5'} cursor-pointer`} />
               ))}
             </div>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tighter mb-2">{steps[step-1].label}</h2>
-            <p className="text-slate-400 text-[11px] md:text-[13px] leading-relaxed max-w-md italic">{steps[step-1].desc}</p>
+            
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tighter mb-2">{steps[step-1].label}</h2>
+            <p className="text-slate-400 text-[10px] sm:text-[11px] md:text-[13px] leading-relaxed max-w-md italic mb-6">{steps[step-1].desc}</p>
+
+            {/* RESPONSIVE RESUME STRENGTH */}
+            <div className="mb-10 px-4 sm:px-6 py-4 bg-slate-900/60 border border-white/10 rounded-[20px] sm:rounded-[24px] backdrop-blur-3xl flex items-center justify-between shadow-2xl">
+                <span className="text-[8px] sm:text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em] sm:tracking-[0.3em]">RESUME STRENGTH</span>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-24 sm:w-48 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-1000" style={{width: `${resumeScore}%`}}></div>
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-bold text-white/80">{resumeScore}%</span>
+                </div>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-12 scrollbar-hide space-y-10 md:space-y-12">
             {step === 1 && (
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-8 md:space-y-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 md:gap-6">
                   <PremiumInput label="First Name" error={errors.includes('firstName')} value={data.firstName} onChange={(e)=>setData({...data, firstName:e.target.value})} />
                   <PremiumInput label="Last Name" error={errors.includes('lastName')} value={data.lastName} onChange={(e)=>setData({...data, lastName:e.target.value})} />
                   <div className="sm:col-span-2"><PremiumInput label="Professional Role" value={data.role} onChange={(e)=>setData({...data, role:e.target.value})} /></div>
@@ -247,15 +237,15 @@ function Editor() {
                   <PremiumInput label="Country" value={data.country} onChange={(e)=>setData({...data, country:e.target.value})} />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">Professional Summary</label>
-                  <textarea value={data.summary} onChange={(e)=>setData({...data, summary:e.target.value})} className="w-full h-32 md:h-44 p-4 md:p-6 bg-slate-900/50 border border-white/10 rounded-2xl outline-none focus:border-indigo-500 text-[13px] leading-relaxed resize-none transition-all" placeholder="Architect your professional story..." />
+                  <label className="text-[11px] font-bold text-slate-400 tracking-wide uppercase">Summary</label>
+                  <textarea value={data.summary} onChange={(e)=>setData({...data, summary:e.target.value})} className="w-full h-32 md:h-44 p-4 md:p-6 bg-slate-900/50 border border-white/10 rounded-2xl outline-none focus:border-indigo-500 text-[13px] leading-relaxed resize-none transition-all" />
                 </div>
-                <div className="p-6 md:p-8 border-2 border-dashed border-white/10 bg-white/[0.02] rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 hover:bg-white/[0.04] transition-all">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-800 rounded-2xl overflow-hidden ring-2 ring-indigo-500/20 shadow-2xl">{data.photo && <img src={data.photo} className="w-full h-full object-cover" alt="Profile"/>}</div>
-                    <p className="text-[9px] md:text-[10px] font-black text-white/40 uppercase tracking-widest leading-loose text-center sm:text-left">Portrait<br className="hidden sm:block"/>Authentication</p>
+                <div className="p-6 border-2 border-dashed border-white/10 bg-white/[0.02] rounded-3xl flex items-center justify-between">
+                  <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-800 rounded-2xl overflow-hidden ring-2 ring-indigo-500/20">{data.photo && <img src={data.photo} className="w-full h-full object-cover" alt="Profile"/>}</div>
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Portrait</p>
                   </div>
-                  <label className="text-[10px] font-black uppercase text-indigo-400 cursor-pointer hover:text-white transition-colors">Choose Image <input type="file" hidden onChange={handlePhoto}/></label>
+                  <label className="text-[10px] font-black uppercase text-indigo-400 cursor-pointer">Choose <input type="file" hidden onChange={handlePhoto}/></label>
                 </div>
               </div>
             )}
@@ -264,7 +254,7 @@ function Editor() {
                  {data.experience.map((exp, i) => (
                    <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl relative group space-y-6 md:space-y-8 transition-all hover:border-white/20">
                       <button onClick={()=>removeRow('experience', i)} className="absolute top-6 right-6 text-white/20 hover:text-rose-500 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-colors">Delete Entry</button>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 pt-4 md:pt-0">
+                      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-6 pt-4 md:pt-0">
                          <PremiumInput label="Organization" value={exp.company} onChange={(e)=>updateList('experience', i, 'company', e.target.value)} />
                          <PremiumInput label="Role" value={exp.role} onChange={(e)=>updateList('experience', i, 'role', e.target.value)} />
                          <PremiumInput label="Start Date" value={exp.startDate} onChange={(e)=>updateList('experience', i, 'startDate', e.target.value)} />
@@ -283,7 +273,7 @@ function Editor() {
             {step === 3 && (
               <div className="animate-in slide-in-from-right-10 duration-700 space-y-10">
                  {data.education.map((edu, i) => (
-                   <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 relative">
+                   <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl relative group space-y-6 sm:grid sm:grid-cols-2 sm:gap-6">
                       <button onClick={()=>removeRow('education', i)} className="absolute top-6 right-6 text-white/20 hover:text-rose-500 text-[8px] md:text-[9px] font-black uppercase tracking-widest">Delete</button>
                       <div className="pt-4 md:pt-0"><PremiumInput label="Institution" value={edu.school} onChange={(e)=>updateList('education', i, 'school', e.target.value)} /></div>
                       <PremiumInput label="Degree / Diploma" value={edu.degree} onChange={(e)=>updateList('education', i, 'degree', e.target.value)} />
@@ -342,76 +332,76 @@ function Editor() {
             )}
           </div>
 
-          {/* BOTTOM BAR */}
-          <div className="h-24 md:h-28 bg-slate-900 border-t border-white/10 flex items-center justify-between px-4 md:px-10 shrink-0 sticky bottom-0 z-[110] shadow-2xl">
-              <div className="flex gap-2 md:gap-4 items-center">
-                 <button onClick={()=>setStep(s=>Math.max(1, s-1))} className={`text-white/20 font-black uppercase text-[8px] md:text-[10px] tracking-widest px-2 md:px-4 py-4 transition-all ${step === 1 ? 'hidden' : 'hover:text-white'}`}>Back</button>
-                 <div className={`h-6 w-px bg-white/5 ${step === 1 ? 'hidden' : 'block'}`} />
-                 <button onClick={loadSampleData} className="text-emerald-400 font-black text-[8px] md:text-[9px] uppercase tracking-widest px-3 md:px-4 py-2 hover:bg-emerald-500/10 rounded-lg transition-all border border-emerald-500/20">Fill</button>
-                 <button onClick={handleBackup} className="hidden sm:block text-indigo-400 font-bold text-[9px] uppercase tracking-widest px-2 hover:text-white transition-all">Backup</button>
-                 <button onClick={resetData} className="text-rose-400 font-bold text-[8px] md:text-[9px] uppercase tracking-widest px-2 hover:text-white transition-all">Reset</button>
+          <div className="h-24 sm:h-28 bg-[#020617] border-t border-white/10 flex items-center justify-between px-6 sm:px-10 shrink-0 sticky bottom-0 z-[110] shadow-2xl">
+              <div className="flex gap-2 sm:gap-4 items-center">
+                 <button onClick={()=>setStep(s=>Math.max(1, s-1))} className={`text-white/20 font-black uppercase text-[8px] sm:text-[10px] tracking-widest px-2 sm:px-4 transition-all ${step === 1 ? 'hidden' : 'hover:text-white'}`}>Back</button>
+                 <button onClick={loadSampleData} className="text-emerald-400 font-black text-[8px] sm:text-[9px] uppercase border border-emerald-500/20 px-2 sm:px-4 py-2 rounded-lg hover:bg-emerald-500/10 transition-all">Fill</button>
+                 <button onClick={handleBackup} className="hidden sm:block text-indigo-400 font-bold text-[9px] uppercase hover:text-white transition-all">Backup</button>
+                 <button onClick={resetData} className="text-rose-400 font-bold text-[8px] sm:text-[9px] uppercase hover:text-white transition-all">Reset</button>
               </div>
-              
               <button 
-                onClick={handleNextStep}
-                className={`px-6 md:px-12 py-3.5 md:py-4 rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.1em] md:tracking-[0.2em] transition-all shadow-2xl ${step === 1 && (!data.firstName || !data.lastName || !data.email) ? 'bg-white/5 text-white/10' : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/30'}`}
+                onClick={handleNextStep} 
+                className="px-6 sm:px-14 py-3 sm:py-4 rounded-2xl bg-indigo-600 text-white font-black text-[9px] sm:text-[11px] uppercase tracking-[0.2em] transition-transform active:scale-95"
               >
-                 {step === 5 ? 'Final Draft →' : 'Next Step →'}
+                {step === 5 ? 'Final Draft' : 'Next Step'}
               </button>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: PREVIEW */}
-        <div className={`flex-1 flex flex-col h-full items-center bg-[#020617] transition-all duration-1000 overflow-y-auto scrollbar-hide 
-          ${showFinal ? 'p-0 bg-white' : 'p-6 lg:p-20'} 
+        {/* RIGHT COLUMN: PROFESSIONAL PREVIEW STAGE */}
+        <div className={`flex-1 flex flex-col h-full items-center transition-all duration-1000 overflow-y-auto scrollbar-hide 
+          ${showFinal ? 'p-0 bg-[#020617] stage-pattern' : 'p-6 lg:p-12 lg:pt-10 bg-[#020617]'} 
           ${!isMobilePreview && !showFinal ? 'hidden lg:flex' : 'flex'}`}>
           
-          {!showFinal && (
-            <div className="flex flex-col items-center gap-6 mb-10 md:mb-14 shrink-0 no-print">
-               <div className="flex flex-col sm:flex-row gap-4 md:gap-6 items-center px-6 md:px-8 py-3 bg-slate-900/80 backdrop-blur border border-white/10 rounded-2xl shadow-xl">
-                  <div className="flex flex-col gap-1 items-center sm:items-start">
-                    <span className="text-[7px] md:text-[8px] font-black uppercase text-indigo-400">Typography</span>
-                    <select className="bg-transparent text-[10px] md:text-xs font-bold outline-none cursor-pointer" value={config.font} onChange={(e)=>setConfig({...config, font: e.target.value})}>
-                        <option value="Inter">Modern (Sans)</option>
-                        <option value="Playfair Display">Elegant (Serif)</option>
-                        <option value="Roboto">Clean (Roboto)</option>
-                    </select>
-                  </div>
-                  <div className="hidden sm:block w-px h-8 bg-white/10" />
-                  <div className="flex flex-col gap-1 items-center sm:items-start">
-                    <span className="text-[7px] md:text-[8px] font-black uppercase text-indigo-400">Line Height</span>
-                    <input type="range" min="1" max="2" step="0.1" className="w-20 md:w-24 accent-indigo-500" value={config.spacing} onChange={(e)=>setConfig({...config, spacing: e.target.value})} />
+          {!showFinal ? (
+            /* --- EDITING MODE PREVIEW --- */
+            <div className="flex flex-col items-center gap-6 mb-14 shrink-0 no-print w-full max-w-4xl">
+               <div className="w-full flex items-center justify-center mb-4">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 bg-slate-900/60 border border-white/10 rounded-[28px] backdrop-blur-3xl flex items-center gap-1 sm:gap-2 shadow-2xl overflow-x-auto scrollbar-hide">
+                    {['executive', 'modernist', 'creative', 'simple', 'astraea'].map((t) => (
+                      <button key={t} onClick={() => setTemplate(t)} className={`whitespace-nowrap px-4 sm:px-6 py-1.5 sm:py-2 text-[8px] sm:text-[9px] font-black rounded-[18px] transition-all uppercase tracking-[0.1em] ${template === t ? 'bg-white text-black shadow-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white'}`}>{t}</button>
+                    ))}
                   </div>
                </div>
-               <div className="flex overflow-x-auto max-w-full p-1.5 bg-slate-900/60 backdrop-blur-3xl rounded-2xl border border-white/10 shadow-2xl scrollbar-hide">
-                  {['executive', 'modernist', 'creative', 'simple', 'astraea'].map((t) => (
-                    <button key={t} onClick={() => setTemplate(t)} className={`whitespace-nowrap px-4 md:px-8 py-2 md:py-2.5 text-[8px] md:text-[9px] font-black rounded-xl transition-all uppercase tracking-widest ${template === t ? 'bg-white text-black shadow-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'text-white/20 hover:text-white'}`}>{t}</button>
-                  ))}
+               <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.35] sm:scale-[0.45]' : 'w-[210mm] scale-[0.6]'} origin-top ring-1 ring-white/10 shadow-[0_0_120px_rgba(0,0,0,0.9)]`} style={{minHeight: '297mm'}}>
+                 <div className="print:m-0 h-full">
+                   {template === 'executive' && <ExecutiveTemplate data={data} />}
+                   {template === 'modernist' && <ModernistTemplate data={data} />}
+                   {template === 'creative' && <CreativeTemplate data={data} />}
+                   {template === 'simple' && <SimpleTemplate data={data} />}
+                   {template === 'astraea' && <AstraeaTemplate data={data} />}
+                 </div>
                </div>
             </div>
-          )}
+          ) : (
+            /* --- ENHANCED FINAL STAGE --- */
+            <div className="w-full flex-1 flex flex-col items-center py-12 md:py-20 animate-in fade-in duration-1000">
+               <div className="mb-12 flex flex-col items-center gap-4 no-print">
+                 <h3 className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.5em] animate-pulse text-center">Generation Complete</h3>
+                 <h2 className="text-2xl sm:text-3xl font-black text-white italic text-center px-4">Your Masterpiece is Ready.</h2>
+               </div>
 
-          {/* THE RESUME CANVAS (Scaled for Mobile Viewport) */}
-          <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${showFinal ? 'w-[210mm] scale-100 mt-10 md:mt-20 mb-32' : 'w-[210mm] scale-[0.35] sm:scale-[0.5] md:scale-[0.6] lg:scale-[0.65] origin-top ring-1 ring-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)]'}`} style={{minHeight: '297mm', fontFamily: config.font, lineHeight: config.spacing}}>
-            <div className="print:m-0 h-full">
-              {template === 'executive' && <ExecutiveTemplate data={data} />}
-              {template === 'modernist' && <ModernistTemplate data={data} />}
-              {template === 'creative' && <CreativeTemplate data={data} />}
-              {template === 'simple' && <SimpleTemplate data={data} />}
-              {template === 'astraea' && <AstraeaTemplate data={data} />}
-            </div>
-          </div>
+               <div className="printable-resume w-[210mm] scale-[0.4] sm:scale-[0.6] md:scale-[0.85] lg:scale-100 bg-white mb-32 origin-top transition-all duration-700" 
+                 style={{
+                   minHeight: '297mm', 
+                   boxShadow: '0 50px 100px -20px rgba(0,0,0,0.9), 0 0 50px -10px rgba(99,102,241,0.2)'
+                 }}>
+                 <div className="print:m-0 h-full">
+                    {template === 'executive' && <ExecutiveTemplate data={data} />}
+                    {template === 'modernist' && <ModernistTemplate data={data} />}
+                    {template === 'creative' && <CreativeTemplate data={data} />}
+                    {template === 'simple' && <SimpleTemplate data={data} />}
+                    {template === 'astraea' && <AstraeaTemplate data={data} />}
+                 </div>
+               </div>
 
-          {/* FINAL OVERLAY UI */}
-          {showFinal && (
-            <div className="fixed bottom-6 md:bottom-10 flex flex-col sm:flex-row items-center gap-3 md:gap-4 left-1/2 -translate-x-1/2 no-print z-[300] bg-slate-900/80 backdrop-blur-3xl p-3 rounded-[24px] md:rounded-[32px] border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-1000 w-[90%] sm:w-auto">
-               <button onClick={()=>setShowFinal(false)} className="w-full sm:w-auto bg-white/5 text-white/50 border border-white/10 px-6 md:px-8 py-3 md:py-4 rounded-[18px] md:rounded-[24px] font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-white/10 hover:text-white transition-all">Revise Entry</button>
-               <div className="hidden sm:block h-8 w-[1px] bg-white/10" />
-               <button onClick={()=>window.print()} className="w-full sm:w-auto bg-indigo-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-[18px] md:rounded-[24px] font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:bg-indigo-500 transition-all flex items-center justify-center gap-3">
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                 DOWNLOAD PDF
-               </button>
-               <button className="hidden sm:block bg-white/10 text-white/80 px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] hover:bg-white/20 transition-all border border-white/5 opacity-50 cursor-not-allowed">DOCX</button>
+               {/* FINAL ACTION DOCK */}
+               <div className="fixed bottom-6 md:bottom-10 flex flex-col sm:flex-row items-center gap-3 md:gap-4 left-1/2 -translate-x-1/2 no-print z-[300] bg-slate-900/90 backdrop-blur-3xl p-4 rounded-[32px] border border-white/10 shadow-2xl w-[90%] sm:w-auto">
+                  <button onClick={()=>setShowFinal(false)} className="w-full sm:w-auto bg-white/5 text-white/50 border border-white/10 px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-all">Revise Entry</button>
+                  <button onClick={()=>window.print()} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
+                    DOWNLOAD PDF
+                  </button>
+               </div>
             </div>
           )}
         </div>
