@@ -163,31 +163,55 @@ function Editor() {
       
       <style>{`
         @media print {
-          @page { size: A4; margin: 0 !important; }
-          body { 
-            background: white !important; margin: 0 !important; padding: 0 !important; 
-            width: 210mm !important; height: 297mm !important; 
-            -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; 
+          @page { 
+            size: A4; 
+            margin: 0 !important; 
           }
+          
+          html, body { 
+            background: white !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            width: 210mm !important; 
+            height: 297mm !important; 
+            /* FIX: Prevent dimmed look by boosting contrast/brightness for PDF engines */
+            filter: contrast(1.1) brightness(1.02) !important;
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+          }
+
           body * { visibility: hidden; }
           .printable-resume, .printable-resume * { visibility: visible; }
+
           .printable-resume { 
-            position: absolute !important; left: 0 !important; top: 0 !important; 
-            margin: 0 !important; padding: 0 !important; 
-            width: 210mm !important; height: 297mm !important; 
-            transform: scale(1) !important; transform-origin: top left !important; 
-            border: none !important; box-shadow: none !important; overflow: hidden !important; 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            width: 210mm !important; 
+            height: 297mm !important; 
+            transform: scale(1) !important; 
+            transform-origin: top left !important; 
+            border: none !important; 
+            box-shadow: none !important; 
+            overflow: hidden !important;
+            /* FIX: Ensure mobile blurs don't create grey/dimmed overlays */
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
           }
+
           .no-print { display: none !important; }
         }
+
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
         .stage-pattern {
           background-color: #020617;
           background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
           background-size: 40px 40px;
         }
       `}</style>
-
       {/* Save Notification */}
       <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${saveStatus ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
         ✨ Progress Saved
