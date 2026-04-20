@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { useAuth } from './context/AuthContext';
 
 // --- ELITE COMPONENTS ---
 
@@ -83,6 +86,7 @@ const FAQItem = ({ question, answer }) => {
 
 function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const templateRef = useRef(null);
   const logicRef = useRef(null);
   const faqRef = useRef(null);
@@ -137,6 +141,35 @@ function LandingPage() {
         </div>
 
         <div className="flex items-center gap-4">
+           {!user ? (
+             <>
+               <button
+                 onClick={() => navigate('/login')}
+                 className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all"
+               >
+                 Login
+               </button>
+               <button
+                 onClick={() => navigate('/signup')}
+                 className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-indigo-300 hover:text-white hover:bg-indigo-600/20 transition-all"
+               >
+                 Sign up
+               </button>
+             </>
+           ) : (
+             <button
+               onClick={async () => {
+                 try {
+                   await signOut(auth);
+                 } finally {
+                   navigate('/', { replace: true });
+                 }
+               }}
+               className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all"
+             >
+               Logout
+             </button>
+           )}
            <motion.button 
             whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(99,102,241,0.4)" }}
             whileTap={{ scale: 0.95 }}

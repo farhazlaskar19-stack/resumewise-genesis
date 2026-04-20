@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import ExecutiveTemplate from './temp_folder/ExecutiveTemplate';
 import ModernistTemplate from './temp_folder/ModernistTemplate';
 import CreativeTemplate from './temp_folder/CreativeTemplate';
 import SimpleTemplate from './temp_folder/SimpleTemplate';
 import AstraeaTemplate from './temp_folder/AstraeaTemplate';
+import { db } from './lib/firebase';
+import { useAuth } from './context/AuthContext';
 
 // --- SUCCESS CHECKMARK COMPONENT ---
 const SuccessMark = ({ show }) => (
@@ -33,12 +36,14 @@ const PremiumInput = ({ label, value, required, error, ...props }) => (
 function Editor() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [step, setStep] = useState(1); 
   const [showFinal, setShowFinal] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [isMobilePreview, setIsMobilePreview] = useState(false);
   const [saveStatus, setSaveStatus] = useState(false);
   const [errors, setErrors] = useState([]); 
+  const saveToastTimerRef = useRef(null);
 
   const [template, setTemplate] = useState(() => {
     const params = new URLSearchParams(location.search);
@@ -61,10 +66,34 @@ function Editor() {
     customSections: [{ title: '', content: '' }]
   };
 
-  const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('pro_cv_complete_v5_final');
-    return saved ? JSON.parse(saved) : initialData;
-  });
+  const [data, setData] = useState(initialData);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function hydrate() {
+      if (!user?.uid) return;
+      try {
+        const snap = await getDoc(doc(db, 'resumes', user.uid));
+        if (cancelled) return;
+        if (snap.exists()) {
+          const remote = snap.data();
+          setData((prev) => ({
+            ...prev,
+            ...remote,
+          }));
+        }
+      } catch (e) {
+        // ignore (offline / permissions / missing firebase setup)
+      } finally {
+        if (!cancelled) setIsHydrated(true);
+      }
+    }
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   const loadSampleData = () => {
     const sample = {
@@ -90,8 +119,10 @@ function Editor() {
   const resetData = () => {
     if(window.confirm("Are you sure?")) {
       setData(initialData);
-      localStorage.removeItem('pro_cv_complete_v5_final');
       setStep(1);
+      if (user?.uid) {
+        setDoc(doc(db, 'resumes', user.uid), initialData).catch(() => {});
+      }
     }
   };
 
@@ -126,8 +157,30 @@ function Editor() {
     if (data.hardSkills.some(s => s.name)) score += 20;
     if (data.city && data.postCode) score += 10;
     setResumeScore(Math.min(score, 100));
-    localStorage.setItem('pro_cv_complete_v5_final', JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    if (!user?.uid || !isHydrated) return;
+
+    const t = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, 'resumes', user.uid), data);
+        setSaveStatus(true);
+        if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+        saveToastTimerRef.current = setTimeout(() => setSaveStatus(false), 2000);
+      } catch (e) {
+        // silent fail (offline, permissions, etc.)
+      }
+    }, 700);
+
+    return () => clearTimeout(t);
+  }, [data, isHydrated, user?.uid]);
+
+  useEffect(() => {
+    return () => {
+      if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    };
+  }, []);
 
   const handleBackup = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
