@@ -5,6 +5,8 @@ import TemplateSelector from './TemplateSelector'; // New Component
 import Editor from './Editor';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import MyBlueprints from './pages/MyBlueprints';
+import AccountSettings from './pages/AccountSettings';
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
 
@@ -17,6 +19,22 @@ function App() {
           <Route path="/select" element={<TemplateSelector />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/blueprints"
+            element={
+              <RequireAuth>
+                <MyBlueprints />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <AccountSettings />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/editor"
             element={

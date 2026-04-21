@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import ExecutiveTemplate from './temp_folder/ExecutiveTemplate';
 import ModernistTemplate from './temp_folder/ModernistTemplate';
 import CreativeTemplate from './temp_folder/CreativeTemplate';
@@ -77,10 +77,19 @@ function Editor() {
         const snap = await getDoc(doc(db, 'resumes', user.uid));
         if (cancelled) return;
         if (snap.exists()) {
-          const remote = snap.data();
+          const remote = snap.data() || {};
+          const remoteData =
+            remote?.data && typeof remote.data === 'object'
+              ? remote.data
+              : remote; // legacy shape: data stored at root
+
+          if (remote?.template && typeof remote.template === 'string') {
+            setTemplate(remote.template);
+          }
+
           setData((prev) => ({
             ...prev,
-            ...remote,
+            ...remoteData,
           }));
         }
       } catch (e) {
@@ -121,7 +130,11 @@ function Editor() {
       setData(initialData);
       setStep(1);
       if (user?.uid) {
-        setDoc(doc(db, 'resumes', user.uid), initialData).catch(() => {});
+        setDoc(
+          doc(db, 'resumes', user.uid),
+          { template, data: initialData, updatedAt: serverTimestamp() },
+          { merge: true }
+        ).catch(() => {});
       }
     }
   };
@@ -164,17 +177,25 @@ function Editor() {
 
     const t = setTimeout(async () => {
       try {
-        await setDoc(doc(db, 'resumes', user.uid), data);
+        await setDoc(
+          doc(db, 'resumes', user.uid),
+          {
+            template,
+            data,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
         setSaveStatus(true);
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus(false), 2000);
       } catch (e) {
         // silent fail (offline, permissions, etc.)
       }
-    }, 700);
+    }, 2000);
 
     return () => clearTimeout(t);
-  }, [data, isHydrated, user?.uid]);
+  }, [data, template, isHydrated, user?.uid]);
 
   useEffect(() => {
     return () => {

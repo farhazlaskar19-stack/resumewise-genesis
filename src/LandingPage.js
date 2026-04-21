@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { signOut } from 'firebase/auth';
-import { auth } from './lib/firebase';
 import { useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
 
 // --- ELITE COMPONENTS ---
 
@@ -94,13 +93,6 @@ function LandingPage() {
   const teamRef = useRef(null);
   const evolutionRef = useRef(null);
   const architectureRef = useRef(null);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
@@ -129,57 +121,9 @@ function LandingPage() {
       </div>
 
       {/* --- NAV BAR --- */}
-      <nav className={`fixed top-0 left-0 w-full z-[1000] px-6 md:px-12 py-4 md:py-6 flex justify-between items-center transition-all duration-500 border-b ${scrolled ? 'bg-[#020617]/80 backdrop-blur-2xl border-white/10 shadow-2xl py-3 md:py-4' : 'bg-transparent border-transparent'}`}>
-        <LogoArchitect onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} />
-        
-        <div className="hidden lg:flex gap-8 xl:gap-10">
-          <button onClick={() => scrollToSection(workflowRef)} className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-indigo-400 transition-all focus:outline-none">Workflow</button>
-          <button onClick={() => scrollToSection(architectureRef)} className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-indigo-400 transition-all focus:outline-none">Architecture</button>
-          <button onClick={() => scrollToSection(templateRef)} className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-indigo-400 transition-all focus:outline-none">Templates</button>
-          <button onClick={() => scrollToSection(teamRef)} className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-indigo-400 transition-all focus:outline-none">Team</button>
-          <button onClick={() => scrollToSection(faqRef)} className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-indigo-400 transition-all focus:outline-none">FAQ</button>
-        </div>
-
-        <div className="flex items-center gap-4">
-           {!user ? (
-             <>
-               <button
-                 onClick={() => navigate('/login')}
-                 className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all"
-               >
-                 Login
-               </button>
-               <button
-                 onClick={() => navigate('/signup')}
-                 className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-indigo-300 hover:text-white hover:bg-indigo-600/20 transition-all"
-               >
-                 Sign up
-               </button>
-             </>
-           ) : (
-             <button
-               onClick={async () => {
-                 try {
-                   await signOut(auth);
-                 } finally {
-                   navigate('/', { replace: true });
-                 }
-               }}
-               className="hidden sm:block px-5 md:px-7 py-2.5 md:py-3 bg-white/5 border border-white/10 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all"
-             >
-               Logout
-             </button>
-           )}
-           <motion.button 
-            whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(99,102,241,0.4)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/select')} 
-            className="px-5 md:px-8 py-2.5 md:py-3.5 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all shadow-xl"
-           >
-             Create CV
-           </motion.button>
-        </div>
-      </nav>
+      <div className="fixed top-0 left-0 w-full z-[1000]">
+        <Navbar />
+      </div>
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-48 md:pt-56 pb-20 md:pb-40 px-6 md:px-12 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 md:gap-24">

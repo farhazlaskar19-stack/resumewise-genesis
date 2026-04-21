@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 
 function LogoMark() {
   return (
@@ -26,6 +27,7 @@ function LogoMark() {
 export default function Signup() {
   const navigate = useNavigate();
 
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -36,12 +38,35 @@ export default function Signup() {
     e.preventDefault();
     setError('');
 
+    const trimmedName = fullName.trim();
+    if (!trimmedName) return setError('Full name is required.');
     if (password.length < 6) return setError('Password must be at least 6 characters.');
     if (password !== confirm) return setError('Passwords do not match.');
 
     setSubmitting(true);
     try {
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      try {
+        await updateProfile(cred.user, { displayName: trimmedName });
+      } catch (e) {
+        // ignore profile update failures; Firestore still stores the name
+      }
+
+      try {
+        await setDoc(
+          doc(db, 'users', cred.user.uid),
+          {
+            uid: cred.user.uid,
+            fullName: trimmedName,
+            email: cred.user.email || email.trim(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (e) {
+        // ignore (offline / permissions)
+      }
       navigate('/select', { replace: true });
     } catch (err) {
       setError(err?.message || 'Signup failed. Please try again.');
@@ -97,6 +122,21 @@ export default function Signup() {
 
           <div className="bg-white/[0.03] border border-white/10 rounded-[32px] md:rounded-[44px] p-8 md:p-10 backdrop-blur-3xl shadow-2xl">
             <form onSubmit={onSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                  Full Name
+                </label>
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  type="text"
+                  required
+                  autoComplete="name"
+                  className="w-full px-4 py-3.5 bg-slate-900/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 text-[13px] font-medium placeholder:text-white/10"
+                  placeholder="e.g. Farhaz Laskar"
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
                   Email

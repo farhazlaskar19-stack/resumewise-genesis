@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { doc, getDoc } from 'firebase/firestore';
+import Navbar from './components/Navbar';
+import { db } from './lib/firebase';
+import { useAuth } from './context/AuthContext';
 
 // --- TEMPLATE ARCHITECTURE ---
 // FIXED: Added Astraea and Synced minimalist to "simple" to match Editor.js logic
@@ -21,11 +25,14 @@ const proTips = [
 
 function TemplateSelector() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showGallery, setShowGallery] = useState(false); // State to separate Step 1 and Step 2
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [tipIndex, setTipIndex] = useState(0);
   const [logLines, setLogLines] = useState([]);
+  const [hasRecent, setHasRecent] = useState(false);
+  const [recentTemplate, setRecentTemplate] = useState('executive');
 
   // Cycle Pro-Tips during loading
   useEffect(() => {
@@ -36,6 +43,33 @@ function TemplateSelector() {
       return () => clearInterval(interval);
     }
   }, [loading]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkRecent() {
+      if (!user?.uid) return;
+      try {
+        const snap = await getDoc(doc(db, 'resumes', user.uid));
+        if (cancelled) return;
+        if (snap.exists()) {
+          const d = snap.data();
+          const hasData =
+            !!d?.data ||
+            Object.keys(d || {}).some((k) => k !== 'updatedAt' && k !== 'createdAt' && k !== 'template');
+          setHasRecent(!!hasData);
+          if (d?.template) setRecentTemplate(d.template);
+        } else {
+          setHasRecent(false);
+        }
+      } catch (e) {
+        setHasRecent(false);
+      }
+    }
+    checkRecent();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   const handleSelect = (id) => {
     setLoading(true);
@@ -91,7 +125,11 @@ function TemplateSelector() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white font-sans flex flex-col items-center justify-center p-4 md:p-8 overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#020617] text-white font-sans overflow-x-hidden relative">
+      <div className="fixed top-0 left-0 w-full z-[1000]">
+        <Navbar />
+      </div>
+      <div className="flex flex-col items-center justify-center p-4 md:p-8 pt-28 md:pt-32">
       
       {/* BACKGROUND PARTICLE FIELD (Preserved logic) */}
       <AnimatePresence>
@@ -146,14 +184,27 @@ function TemplateSelector() {
                 </div>
 
                 <div className="w-full max-w-md space-y-6 px-4">
-                  <motion.button 
-                    whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(99, 102, 241, 0.3)" }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setShowGallery(true)}
-                    className="w-full py-6 md:py-8 bg-indigo-600 rounded-[28px] md:rounded-[32px] font-black text-xs md:text-sm uppercase tracking-[0.3em] transition-all shadow-2xl"
-                  >
-                    Start from Scratch
-                  </motion.button>
+                  <div className={`grid gap-4 ${user && hasRecent ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                    <motion.button 
+                      whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(99, 102, 241, 0.3)" }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setShowGallery(true)}
+                      className="w-full py-6 md:py-8 bg-indigo-600 rounded-[28px] md:rounded-[32px] font-black text-xs md:text-sm uppercase tracking-[0.3em] transition-all shadow-2xl"
+                    >
+                      Start from Scratch
+                    </motion.button>
+
+                    {user && hasRecent ? (
+                      <motion.button
+                        whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(255, 255, 255, 0.08)" }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => navigate(`/editor?template=${encodeURIComponent(recentTemplate)}`)}
+                        className="w-full py-6 md:py-8 bg-white/5 border border-white/10 rounded-[28px] md:rounded-[32px] font-black text-[10px] md:text-xs uppercase tracking-[0.3em] transition-all text-white/80 hover:text-white hover:bg-white/10"
+                      >
+                        Continue Recent Blueprint
+                      </motion.button>
+                    ) : null}
+                  </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <button 
@@ -255,6 +306,7 @@ function TemplateSelector() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
