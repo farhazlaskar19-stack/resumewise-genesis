@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { serverTimestamp } from 'firebase/firestore';
+import { auth } from '../lib/firebase';
+import { upsertUserProfile } from '../services/userService';
 
 function LogoMark() {
   return (
@@ -53,17 +54,11 @@ export default function Signup() {
       }
 
       try {
-        await setDoc(
-          doc(db, 'users', cred.user.uid),
-          {
-            uid: cred.user.uid,
-            fullName: trimmedName,
-            email: cred.user.email || email.trim(),
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        await upsertUserProfile(cred.user.uid, {
+          fullName: trimmedName,
+          email: cred.user.email || email.trim(),
+          createdAt: serverTimestamp(),
+        });
       } catch (e) {
         // ignore (offline / permissions)
       }

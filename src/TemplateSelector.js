@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, getDoc } from 'firebase/firestore';
 import Navbar from './components/Navbar';
-import { db } from './lib/firebase';
 import { useAuth } from './context/AuthContext';
+import { fetchUserResume } from './services/resumeService';
 
 // --- TEMPLATE ARCHITECTURE ---
 // FIXED: Added Astraea and Synced minimalist to "simple" to match Editor.js logic
@@ -49,18 +48,10 @@ function TemplateSelector() {
     async function checkRecent() {
       if (!user?.uid) return;
       try {
-        const snap = await getDoc(doc(db, 'resumes', user.uid));
+        const resume = await fetchUserResume(user.uid);
         if (cancelled) return;
-        if (snap.exists()) {
-          const d = snap.data();
-          const hasData =
-            !!d?.data ||
-            Object.keys(d || {}).some((k) => k !== 'updatedAt' && k !== 'createdAt' && k !== 'template');
-          setHasRecent(!!hasData);
-          if (d?.template) setRecentTemplate(d.template);
-        } else {
-          setHasRecent(false);
-        }
+        setHasRecent(resume.exists && !!resume.data);
+        if (resume.template) setRecentTemplate(resume.template);
       } catch (e) {
         setHasRecent(false);
       }

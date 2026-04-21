@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import ExecutiveTemplate from './temp_folder/ExecutiveTemplate';
 import ModernistTemplate from './temp_folder/ModernistTemplate';
 import CreativeTemplate from './temp_folder/CreativeTemplate';
 import SimpleTemplate from './temp_folder/SimpleTemplate';
 import AstraeaTemplate from './temp_folder/AstraeaTemplate';
-import { db } from './lib/firebase';
 import { useAuth } from './context/AuthContext';
+import { fetchUserResume, saveUserResume } from './services/resumeService';
 
 // --- SUCCESS CHECKMARK COMPONENT ---
 const SuccessMark = ({ show }) => (
@@ -74,23 +73,16 @@ function Editor() {
     async function hydrate() {
       if (!user?.uid) return;
       try {
-        const snap = await getDoc(doc(db, 'resumes', user.uid));
+        const resume = await fetchUserResume(user.uid);
         if (cancelled) return;
-        if (snap.exists()) {
-          const remote = snap.data() || {};
-          const remoteData =
-            remote?.data && typeof remote.data === 'object'
-              ? remote.data
-              : remote; // legacy shape: data stored at root
-
-          if (remote?.template && typeof remote.template === 'string') {
-            setTemplate(remote.template);
+        if (resume.exists) {
+          if (resume.template) setTemplate(resume.template);
+          if (resume.data) {
+            setData((prev) => ({
+              ...prev,
+              ...resume.data,
+            }));
           }
-
-          setData((prev) => ({
-            ...prev,
-            ...remoteData,
-          }));
         }
       } catch (e) {
         // ignore (offline / permissions / missing firebase setup)
@@ -130,11 +122,7 @@ function Editor() {
       setData(initialData);
       setStep(1);
       if (user?.uid) {
-        setDoc(
-          doc(db, 'resumes', user.uid),
-          { template, data: initialData, updatedAt: serverTimestamp() },
-          { merge: true }
-        ).catch(() => {});
+        saveUserResume(user.uid, { template, data: initialData }).catch(() => {});
       }
     }
   };
@@ -177,15 +165,7 @@ function Editor() {
 
     const t = setTimeout(async () => {
       try {
-        await setDoc(
-          doc(db, 'resumes', user.uid),
-          {
-            template,
-            data,
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        await saveUserResume(user.uid, { template, data });
         setSaveStatus(true);
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus(false), 2000);

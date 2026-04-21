@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
 import Navbar from '../components/Navbar';
-import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { fetchUserResume } from '../services/resumeService';
 
 export default function MyBlueprints() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [resumeDoc, setResumeDoc] = useState(null);
+  const [resume, setResume] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,11 +16,11 @@ export default function MyBlueprints() {
       if (!user?.uid) return;
       setLoading(true);
       try {
-        const snap = await getDoc(doc(db, 'resumes', user.uid));
+        const r = await fetchUserResume(user.uid);
         if (cancelled) return;
-        setResumeDoc(snap.exists() ? snap.data() : null);
+        setResume(r.exists ? r : null);
       } catch (e) {
-        if (!cancelled) setResumeDoc(null);
+        if (!cancelled) setResume(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -33,13 +32,10 @@ export default function MyBlueprints() {
   }, [user?.uid]);
 
   const hasBlueprint = useMemo(() => {
-    if (!resumeDoc) return false;
-    if (resumeDoc.data && typeof resumeDoc.data === 'object') return true;
-    // legacy shape: fields at root
-    return Object.keys(resumeDoc).some((k) => k !== 'updatedAt' && k !== 'createdAt' && k !== 'template');
-  }, [resumeDoc]);
+    return !!resume?.data;
+  }, [resume]);
 
-  const template = resumeDoc?.template || 'executive';
+  const template = resume?.template || 'executive';
 
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans">

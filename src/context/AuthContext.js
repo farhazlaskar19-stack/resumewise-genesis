@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { fetchUserProfile } from '../services/userService';
 
 const AuthContext = createContext(null);
 
@@ -25,9 +24,9 @@ export function AuthProvider({ children }) {
     async function loadProfile() {
       if (!user?.uid) return;
       try {
-        const snap = await getDoc(doc(db, 'users', user.uid));
+        const res = await fetchUserProfile(user.uid);
         if (cancelled) return;
-        if (snap.exists()) setProfile(snap.data());
+        if (res.exists) setProfile(res.profile);
       } catch (e) {
         // ignore
       }

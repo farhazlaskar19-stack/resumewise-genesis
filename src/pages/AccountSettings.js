@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../lib/firebase';
+import { upsertUserProfile } from '../services/userService';
 
 export default function AccountSettings() {
   const { user, displayName } = useAuth();
@@ -19,16 +18,10 @@ export default function AccountSettings() {
   async function ensureUserDoc() {
     if (!uid) return;
     try {
-      await setDoc(
-        doc(db, 'users', uid),
-        {
-          uid,
-          email,
-          fullName: displayName || '',
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+      await upsertUserProfile(uid, {
+        email,
+        fullName: displayName || '',
+      });
     } catch (e) {
       // ignore
     }
