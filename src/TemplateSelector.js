@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import { useAuth } from './context/AuthContext';
-import { fetchUserResume, saveUserResume } from './services/resumeService';
+import { fetchUserResume, saveUserResume, createBlueprint, generateBlueprintId } from './services/resumeService';
 
 // --- TEMPLATE ARCHITECTURE ---
 // FIXED: Added Astraea and Synced minimalist to "simple" to match Editor.js logic
@@ -63,7 +63,7 @@ function TemplateSelector() {
     };
   }, [user?.uid]);
 
-  const handleSelect = (id) => {
+  const handleSelect = async (id) => {
     setLoading(true);
     // PROFESSIONAL TRANSITION STEPS
     const logs = [
@@ -81,7 +81,30 @@ function TemplateSelector() {
         setStatus(line);
         setLogLines((prev) => [...prev, line].slice(-4)); 
         if (index === logs.length - 1) {
-          const finalTimer = setTimeout(() => navigate(`/editor?template=${id}`), 1000);
+          const finalTimer = setTimeout(async () => {
+            try {
+              // Generate unique blueprint ID
+              const blueprintId = generateBlueprintId();
+              
+              // Create new blueprint in Firestore
+              if (user?.uid) {
+                await createBlueprint(user.uid, id, {}); // Start with empty data
+                console.log('Created new blueprint:', blueprintId);
+              }
+              
+              // Save template selection to localStorage for immediate use
+              localStorage.setItem('selectedTemplate', id);
+              // Clear any existing resume data for "Start from Scratch"
+              localStorage.removeItem('pro_cv_complete_v5_final');
+              
+              // Navigate to editor with blueprint ID
+              navigate(`/editor?id=${blueprintId}&template=${id}&scratch=true`);
+            } catch (error) {
+              console.error('Failed to create blueprint:', error);
+              // Fallback navigation without blueprint creation
+              navigate(`/editor?template=${id}&scratch=true`);
+            }
+          }, 1000);
           timers.push(finalTimer);
         }
       }, index * 700);

@@ -35,17 +35,6 @@ export const TemplateSkeleton = () => (
   </div>
 );
 
-export const DashboardSkeleton = () => (
-  <div className="space-y-8 animate-pulse">
-    <div className="bg-slate-700/50 rounded-2xl h-20 w-full"></div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="bg-slate-700/50 rounded-2xl h-32"></div>
-      <div className="bg-slate-700/50 rounded-2xl h-32"></div>
-      <div className="bg-slate-700/50 rounded-2xl h-32"></div>
-    </div>
-    <div className="bg-slate-700/50 rounded-2xl h-64 w-full"></div>
-  </div>
-);
 
 export const ResumePreviewSkeleton = () => (
   <div className="bg-white shadow-2xl rounded-lg overflow-hidden animate-pulse" style={{minHeight: '297mm'}}>
@@ -66,6 +55,69 @@ export const ResumePreviewSkeleton = () => (
         <div className="bg-slate-300 rounded h-4 w-1/4"></div>
         <div className="bg-slate-300 rounded h-3 w-full"></div>
         <div className="bg-slate-300 rounded h-3 w-5/6"></div>
+      </div>
+    </div>
+  </div>
+);
+
+export const DashboardSkeleton = () => (
+  <div className="min-h-screen bg-[#020617] text-white font-sans">
+    {/* Header Skeleton */}
+    <div className="bg-slate-900/50 backdrop-blur-3xl border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="bg-slate-700 rounded h-8 w-48 animate-pulse"></div>
+            <div className="bg-slate-700 rounded h-4 w-64 animate-pulse"></div>
+          </div>
+          <div className="bg-slate-700 rounded h-10 w-32 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    {/* Quick Stats Skeleton */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-slate-800/50 backdrop-blur-3xl border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="bg-slate-700 rounded h-4 w-32 animate-pulse"></div>
+                <div className="bg-slate-700 rounded h-8 w-16 animate-pulse"></div>
+              </div>
+              <div className="w-12 h-12 bg-slate-700 rounded-xl animate-pulse"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Blueprints Grid Skeleton */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="bg-slate-800/50 backdrop-blur-3xl border border-white/10 rounded-2xl p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="bg-slate-700 rounded h-6 w-3/4 animate-pulse"></div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-slate-700 rounded h-6 w-20 animate-pulse"></div>
+                  <div className="bg-slate-700 rounded h-4 w-16 animate-pulse"></div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="bg-slate-700 rounded h-4 w-24 animate-pulse"></div>
+                <div className="bg-slate-700 rounded h-4 w-32 animate-pulse"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="bg-slate-700 rounded h-8 flex-1 animate-pulse"></div>
+                <div className="bg-slate-700 rounded h-8 w-8 animate-pulse"></div>
+                <div className="bg-slate-700 rounded h-8 w-8 animate-pulse"></div>
+                <div className="bg-slate-700 rounded h-8 w-8 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   </div>

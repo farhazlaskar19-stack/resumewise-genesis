@@ -5,7 +5,7 @@ import TemplateSelector from './TemplateSelector'; // New Component
 import Editor from './Editor';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import MyBlueprints from './pages/MyBlueprints';
+import Dashboard from './components/Dashboard';
 import AccountSettings from './pages/AccountSettings';
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
@@ -23,7 +23,7 @@ function App() {
             path="/blueprints"
             element={
               <RequireAuth>
-                <MyBlueprints />
+                <Dashboard />
               </RequireAuth>
             }
           />

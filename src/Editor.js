@@ -6,7 +6,7 @@ import CreativeTemplate from './temp_folder/CreativeTemplate';
 import SimpleTemplate from './temp_folder/SimpleTemplate';
 import AstraeaTemplate from './temp_folder/AstraeaTemplate';
 import { useAuth } from './context/AuthContext';
-import { fetchUserResume, saveUserResume } from './services/resumeService';
+import { fetchUserResume, saveUserResume, fetchBlueprint, saveBlueprint, updateBlueprintStatus } from './services/resumeService';
 import { FormSkeleton, ResumePreviewSkeleton } from './components/SkeletonLoader';
 import { useToast, ToastContainer } from './components/Toast';
 
@@ -20,19 +20,25 @@ const SuccessMark = ({ show }) => (
 );
 
 // --- COMMERCIAL GRADE INPUT ---
-const PremiumInput = ({ label, value, required, error, ...props }) => (
-  <div className="flex flex-col gap-2 flex-1 min-w-full sm:min-w-[280px] group">
-    <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">{label}</label>
-    <div className={`flex items-center px-4 py-3 sm:py-3.5 bg-slate-900/40 border transition-all duration-300 rounded-xl focus-within:bg-slate-800 ${error ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : value ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-white/10'} focus-within:border-indigo-500`}>
-      <input 
-        {...props} 
-        value={value}
-        className="bg-transparent border-none outline-none w-full text-[13px] text-white placeholder:text-white/10 font-medium" 
-      />
-      <SuccessMark show={!!value && !error} />
+const PremiumInput = ({ label, value, required, error, ...props }) => {
+  const inputRef = useRef(null);
+  const activeInputRef = useRef(null); // Local ref for this component
+  
+  return (
+    <div className="flex flex-col gap-2 flex-1 min-w-full sm:min-w-[280px] group">
+      <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">{label}</label>
+      <div className={`flex items-center px-4 py-3 sm:py-3.5 bg-slate-900/40 border transition-all duration-300 rounded-xl focus-within:bg-slate-800 ${error ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : value ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-white/10'} focus-within:border-indigo-500`}>
+        <input 
+          {...props} 
+          ref={inputRef}
+          value={value}
+          className="bg-transparent border-none outline-none w-full text-[13px] text-white placeholder:text-white/10 font-medium" 
+        />
+        <SuccessMark show={!!value && !error} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 function Editor() {
   const navigate = useNavigate();
@@ -49,7 +55,24 @@ function Editor() {
 
   const [template, setTemplate] = useState(() => {
     const params = new URLSearchParams(location.search);
-    return params.get('template') || 'executive'; 
+    const urlTemplate = params.get('template');
+    const localTemplate = localStorage.getItem('selectedTemplate');
+    return urlTemplate || localTemplate || 'executive'; 
+  });
+  
+  const [blueprintId, setBlueprintId] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('id') || null;
+  });
+  
+  const [isScratch, setIsScratch] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('scratch') === 'true';
+  });
+  
+  const [isDownload, setIsDownload] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('download') === 'true';
   });
   
   const [config] = useState({ font: 'Inter', spacing: 1.5, size: 14 });
@@ -68,15 +91,54 @@ function Editor() {
     customSections: [{ title: '', content: '' }]
   };
 
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => {
+    // Check if starting from scratch
+    const params = new URLSearchParams(location.search);
+    const isScratchMode = params.get('scratch') === 'true';
+    
+    if (isScratchMode) {
+      return initialData; // Fresh start with empty strings
+    }
+    
+    // Try to get data from localStorage first
+    const localData = localStorage.getItem('pro_cv_complete_v5_final');
+    if (localData) {
+      try {
+        return JSON.parse(localData);
+      } catch (e) {
+        console.warn('Invalid local data, using initial state');
+      }
+    }
+    
+    return initialData; // Fallback to empty state
+  });
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function hydrate() {
-      if (!user?.uid) return;
+      if (!user?.uid || isHydrated) return; // Only run once and if user exists
+      
+      // Skip Firestore fetch if user started from scratch
+      if (isScratch) {
+        console.log('Starting from scratch - skipping Firestore fetch');
+        setIsHydrated(true);
+        return;
+      }
+      
       try {
-        const resume = await fetchUserResume(user.uid);
+        let resume;
+        
+        // If blueprintId exists, fetch specific blueprint
+        if (blueprintId) {
+          console.log('Fetching specific blueprint:', blueprintId);
+          resume = await fetchBlueprint(user.uid, blueprintId);
+        } else {
+          // Fallback to legacy behavior
+          console.log('Fetching most recent blueprint');
+          resume = await fetchUserResume(user.uid);
+        }
+        
         if (cancelled) return;
         if (resume.exists) {
           if (resume.template) setTemplate(resume.template);
@@ -106,7 +168,7 @@ function Editor() {
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, toast]);
+  }, [user?.uid, isScratch, blueprintId]); // Add blueprintId to dependencies
 
   const loadSampleData = () => {
     const sample = {
@@ -181,7 +243,24 @@ function Editor() {
 
     const t = setTimeout(async () => {
       try {
-        await saveUserResume(user.uid, { template, data });
+        setSaveStatus('saving');
+        
+        // Save to correct blueprint or create new one
+        if (blueprintId) {
+          await saveBlueprint(user.uid, blueprintId, { template, data });
+          console.log('Saved to blueprint:', blueprintId);
+        } else if (isScratch) {
+          // For new scratch sessions, we need to create a blueprint first
+          // This should have been handled in TemplateSelector, but fallback here
+          const { createBlueprint } = await import('./services/resumeService');
+          const newBlueprintId = await createBlueprint(user.uid, template, data);
+          setBlueprintId(newBlueprintId);
+          console.log('Created new blueprint:', newBlueprintId);
+        } else {
+          // Fallback to legacy behavior
+          await saveUserResume(user.uid, { template, data });
+        }
+        
         setSaveStatus('synced');
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
@@ -202,11 +281,37 @@ function Editor() {
         
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
+      } finally {
+        // Ensure save status is always reset
+        setTimeout(() => setSaveStatus('idle'), 100);
       }
     }, 1000); // Reduced delay for better UX
 
-    return () => clearTimeout(t);
-  }, [data, template, isHydrated, user?.uid, toast]);
+    return () => {
+      clearTimeout(t);
+      // Ensure save status is reset on cleanup
+      setSaveStatus('idle');
+    };
+  }, [data, template, isHydrated, user?.uid, toast, blueprintId, isScratch]);
+
+  // Save template changes to Firestore
+  useEffect(() => {
+    if (!user?.uid || !isHydrated) return;
+    
+    const saveTemplateChange = async () => {
+      try {
+        await saveUserResume(user.uid, { template, data });
+        console.log('Template change saved to Firestore:', template);
+      } catch (e) {
+        console.error('Failed to save template change:', e);
+        toast.error('Failed to update template selection.');
+      }
+    };
+
+    // Debounce template changes
+    const timer = setTimeout(saveTemplateChange, 1000);
+    return () => clearTimeout(timer);
+  }, [template, data, isHydrated, user?.uid, toast]);
 
   useEffect(() => {
     return () => {
@@ -214,13 +319,30 @@ function Editor() {
     };
   }, []);
 
-  const handleBackup = () => {
+  const handleBackup = async () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `backup_${data.firstName || 'resume'}.json`;
+    link.download = 'resume-backup.json';
     link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownload = async () => {
+    try {
+      // Mark blueprint as complete when downloading
+      if (blueprintId && user?.uid) {
+        await updateBlueprintStatus(user.uid, blueprintId, 'Complete');
+        toast.success('Resume marked as complete');
+      }
+      
+      // Trigger print dialog for PDF download
+      window.print();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast.error('Failed to mark resume as complete');
+    }
   };
 
   const updateList = (section, index, field, value) => {
@@ -530,7 +652,7 @@ function Editor() {
                {/* FINAL ACTION DOCK */}
                <div className="fixed bottom-6 md:bottom-10 flex flex-col sm:flex-row items-center gap-3 md:gap-4 left-1/2 -translate-x-1/2 no-print z-[300] bg-slate-900/90 backdrop-blur-3xl p-4 rounded-[32px] border border-white/10 shadow-2xl w-[90%] sm:w-auto">
                   <button onClick={()=>setShowFinal(false)} className="w-full sm:w-auto bg-white/5 text-white/50 border border-white/10 px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-all">Revise Entry</button>
-                  <button onClick={()=>window.print()} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
+                  <button onClick={handleDownload} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
                     DOWNLOAD PDF
                   </button>
                </div>
