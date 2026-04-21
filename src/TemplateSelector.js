@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import { useAuth } from './context/AuthContext';
-import { fetchUserResume } from './services/resumeService';
+import { fetchUserResume, saveUserResume } from './services/resumeService';
 
 // --- TEMPLATE ARCHITECTURE ---
 // FIXED: Added Astraea and Synced minimalist to "simple" to match Editor.js logic
@@ -25,6 +25,7 @@ const proTips = [
 function TemplateSelector() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const timersRef = useRef([]);
   const [showGallery, setShowGallery] = useState(false); // State to separate Step 1 and Step 2
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -73,42 +74,91 @@ function TemplateSelector() {
       "System Ready."
     ];
     
+    // Store timers for cleanup
+    const timers = [];
     logs.forEach((line, index) => {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setStatus(line);
         setLogLines((prev) => [...prev, line].slice(-4)); 
         if (index === logs.length - 1) {
-          setTimeout(() => navigate(`/editor?template=${id}`), 1000);
+          const finalTimer = setTimeout(() => navigate(`/editor?template=${id}`), 1000);
+          timers.push(finalTimer);
         }
       }, index * 700);
+      timers.push(timer);
     });
+    
+    // Store timers in ref for cleanup and clear previous ones
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = timers;
   };
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // --- ADDED WORKING LOGIC FOR ENTRY BUTTONS ---
   
-  const handleNeuralInjection = () => {
+  const handleNeuralInjection = async () => {
     const code = prompt("Enter your existing Resume JSON code:");
     if (code) {
       try {
-        // Validates and saves to your specific storage key
+        // Validate JSON structure
+        const parsedData = JSON.parse(code);
+        
+        // Save to localStorage for immediate use
         localStorage.setItem('pro_cv_complete_v5_final', code);
+        
+        // Save to Firestore if user is authenticated
+        if (user?.uid) {
+          try {
+            await saveUserResume(user.uid, { template: 'modernist', data: parsedData });
+            console.log('Resume data saved to Firestore');
+          } catch (firestoreError) {
+            console.warn('Failed to save to Firestore, data saved locally:', firestoreError);
+            // Still proceed to editor even if Firestore save fails
+          }
+        }
+        
         handleSelect('modernist'); 
       } catch (e) {
-        alert("Invalid structure. Please check your JSON format.");
+        alert("Invalid JSON format. Please check your structure and try again.");
       }
     }
   };
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.json';
-    fileInput.onchange = (e) => {
+    fileInput.onchange = async (e) => {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = (event) => {
-        localStorage.setItem('pro_cv_complete_v5_final', event.target.result);
-        handleSelect('modernist');
+      reader.onload = async (event) => {
+        try {
+          // Validate JSON structure
+          const parsedData = JSON.parse(event.target.result);
+          
+          // Save to localStorage for immediate use
+          localStorage.setItem('pro_cv_complete_v5_final', event.target.result);
+          
+          // Save to Firestore if user is authenticated
+          if (user?.uid) {
+            try {
+              await saveUserResume(user.uid, { template: 'modernist', data: parsedData });
+              console.log('Resume data saved to Firestore');
+            } catch (firestoreError) {
+              console.warn('Failed to save to Firestore, data saved locally:', firestoreError);
+              // Still proceed to editor even if Firestore save fails
+            }
+          }
+          
+          handleSelect('modernist');
+        } catch (parseError) {
+          alert("Invalid JSON format. Please check your file and try again.");
+        }
       };
       reader.readAsText(file);
     };

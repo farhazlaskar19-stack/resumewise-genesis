@@ -7,6 +7,8 @@ import SimpleTemplate from './temp_folder/SimpleTemplate';
 import AstraeaTemplate from './temp_folder/AstraeaTemplate';
 import { useAuth } from './context/AuthContext';
 import { fetchUserResume, saveUserResume } from './services/resumeService';
+import { FormSkeleton, ResumePreviewSkeleton } from './components/SkeletonLoader';
+import { useToast, ToastContainer } from './components/Toast';
 
 // --- SUCCESS CHECKMARK COMPONENT ---
 const SuccessMark = ({ show }) => (
@@ -36,11 +38,12 @@ function Editor() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const toast = useToast();
   const [step, setStep] = useState(1); 
   const [showFinal, setShowFinal] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [isMobilePreview, setIsMobilePreview] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'synced' | 'error'
   const [errors, setErrors] = useState([]); 
   const saveToastTimerRef = useRef(null);
 
@@ -85,7 +88,16 @@ function Editor() {
           }
         }
       } catch (e) {
-        // ignore (offline / permissions / missing firebase setup)
+        if (!cancelled) {
+          console.error('Failed to fetch resume:', e);
+          if (e.code === 'permission-denied') {
+            toast.error('Permission denied. Please check your account settings.');
+          } else if (e.code === 'unavailable') {
+            toast.warning('Connection lost. Working in offline mode.');
+          } else {
+            toast.error('Failed to load your resume data.');
+          }
+        }
       } finally {
         if (!cancelled) setIsHydrated(true);
       }
@@ -94,7 +106,7 @@ function Editor() {
     return () => {
       cancelled = true;
     };
-  }, [user?.uid]);
+  }, [user?.uid, toast]);
 
   const loadSampleData = () => {
     const sample = {
@@ -104,7 +116,7 @@ function Editor() {
       summary: 'Award-winning Product Designer with over 8 years of experience in creating user-centric digital experiences.',
       hardSkills: [{ name: 'UI/UX Design', level: 95 }, { name: 'React Architecture', level: 85 }],
       experience: [{ company: 'TechNova Systems', role: 'Lead Designer', location: 'Remote', startDate: '2020', endDate: '', isPresent: true, desc: 'Directed the design overhaul.' }],
-      education: [{ school: 'Stanford University', degree: 'B.Sc. Digital Design', field: 'Design', location: 'CA', startDate: '2012', endDate: '2016', gpa: '3.9' }],
+      education: [{ school: 'Stanford University', degree: 'B.Sc Digital Design', field: 'Design', location: 'CA', startDate: '2012', endDate: '2016', gpa: '3.9' }],
       languages: [{ name: 'English', level: 'Native' }],
       socials: [{ title: 'LinkedIn', url: 'linkedin.com/in/samantha' }],
       certifications: [{ title: 'Google UX Design', issuer: 'Coursera' }],
@@ -113,8 +125,9 @@ function Editor() {
       customSections: [{ title: 'Skills', content: 'Design Sprints • User Research' }]
     };
     setData(sample);
-    setSaveStatus(true);
-    setTimeout(() => setSaveStatus(false), 2000);
+    setSaveStatus('synced');
+    if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+    saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
   const resetData = () => {
@@ -163,19 +176,37 @@ function Editor() {
   useEffect(() => {
     if (!user?.uid || !isHydrated) return;
 
+    // Set saving status immediately
+    setSaveStatus('saving');
+
     const t = setTimeout(async () => {
       try {
         await saveUserResume(user.uid, { template, data });
-        setSaveStatus(true);
+        setSaveStatus('synced');
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
-        saveToastTimerRef.current = setTimeout(() => setSaveStatus(false), 2000);
+        saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
       } catch (e) {
-        // silent fail (offline, permissions, etc.)
+        setSaveStatus('error');
+        console.error('Failed to save resume:', e);
+        
+        // Show specific error messages based on error type
+        if (e.code === 'permission-denied') {
+          toast.error('Permission denied. Please check your account settings.');
+        } else if (e.code === 'unavailable') {
+          toast.warning('Connection lost. Your changes will sync when online.');
+        } else if (e.code === 'resource-exhausted') {
+          toast.error('Storage quota exceeded. Please free up some space.');
+        } else {
+          toast.error('Failed to save your changes. Please try again.');
+        }
+        
+        if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
+        saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
       }
-    }, 2000);
+    }, 1000); // Reduced delay for better UX
 
     return () => clearTimeout(t);
-  }, [data, template, isHydrated, user?.uid]);
+  }, [data, template, isHydrated, user?.uid, toast]);
 
   useEffect(() => {
     return () => {
@@ -266,9 +297,17 @@ function Editor() {
           background-size: 40px 40px;
         }
       `}</style>
-      {/* Save Notification */}
-      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${saveStatus ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
-        ✨ Progress Saved
+      {/* Enhanced Save Status Indicator */}
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${
+        saveStatus === 'idle' ? '-translate-y-20 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      } ${
+        saveStatus === 'saving' ? 'bg-amber-500 text-white' :
+        saveStatus === 'synced' ? 'bg-emerald-500 text-white' :
+        saveStatus === 'error' ? 'bg-rose-500 text-white' : ''
+      }`}>
+        {saveStatus === 'saving' && '⏳ Saving...'}
+        {saveStatus === 'synced' && '✅ All changes synced'}
+        {saveStatus === 'error' && '⚠️ Sync failed'}
       </div>
       {/* Mobile Toggle Button (Fix: Added missing button) */}
       {!showFinal && (
@@ -312,7 +351,9 @@ function Editor() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-12 scrollbar-hide space-y-10 md:space-y-12">
-            {step === 1 && (
+            {!isHydrated ? (
+              <FormSkeleton />
+            ) : step === 1 && (
               <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-8 md:space-y-10">
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 md:gap-6">
                   <PremiumInput label="First Name" error={errors.includes('firstName')} value={data.firstName} onChange={(e)=>setData({...data, firstName:e.target.value})} />
@@ -450,6 +491,9 @@ function Editor() {
                     ))}
                   </div>
                </div>
+               {!isHydrated ? (
+               <ResumePreviewSkeleton />
+             ) : (
                <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.4] sm:scale-[0.55]' : 'w-[210mm] scale-[0.6]'} origin-top ring-1 ring-white/10 shadow-[0_0_120px_rgba(0,0,0,0.9)]`} style={{minHeight: '297mm'}}>
                  <div className="print:m-0 h-full">
                    {template === 'executive' && <ExecutiveTemplate data={data} />}
@@ -459,6 +503,7 @@ function Editor() {
                    {template === 'astraea' && <AstraeaTemplate data={data} />}
                  </div>
                </div>
+             )}
             </div>
           ) : (
             /* --- ENHANCED FINAL STAGE --- */
@@ -493,6 +538,9 @@ function Editor() {
           )}
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
 }
