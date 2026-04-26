@@ -12,27 +12,26 @@ import { useToast, ToastContainer } from './components/Toast';
 
 // --- SUCCESS CHECKMARK COMPONENT ---
 const SuccessMark = ({ show }) => (
-  <div className={`ml-auto flex items-center justify-center w-5 h-5 rounded-full transition-all duration-500 ${show ? 'bg-emerald-500 scale-100 opacity-100 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-white/5 scale-50 opacity-0'}`}>
-    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <div className={`ml-auto flex items-center justify-center w-5 h-5 rounded-full transition-all duration-300 ${show ? 'bg-indigo-500/20 scale-100 opacity-100' : 'bg-transparent scale-50 opacity-0'}`}>
+    <svg className="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
     </svg>
   </div>
 );
 
-// --- COMMERCIAL GRADE INPUT ---
+// --- PREMIUM SAAS INPUT ---
 const PremiumInput = ({ label, value, required, error, ...props }) => {
   const inputRef = useRef(null);
-  const activeInputRef = useRef(null); // Local ref for this component
   
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-full sm:min-w-[280px] group">
-      <label className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wide ml-1 uppercase">{label}</label>
-      <div className={`flex items-center px-4 py-3 sm:py-3.5 bg-slate-900/40 border transition-all duration-300 rounded-xl focus-within:bg-slate-800 ${error ? 'border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' : value ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.05)]' : 'border-white/10'} focus-within:border-indigo-500`}>
+    <div className="flex flex-col gap-2 w-full group">
+      <label className="text-[11px] font-semibold text-slate-400 tracking-wide ml-1">{label}</label>
+      <div className={`flex items-center px-4 py-3 sm:py-3.5 bg-white/[0.02] border transition-all duration-300 rounded-xl focus-within:bg-white/[0.04] ${error ? 'border-rose-500/50 shadow-sm shadow-rose-500/10' : value ? 'border-white/20' : 'border-white/10'} focus-within:border-indigo-500 focus-within:shadow-[0_0_15px_rgba(99,102,241,0.15)]`}>
         <input 
           {...props} 
           ref={inputRef}
           value={value}
-          className="bg-transparent border-none outline-none w-full text-[13px] text-white placeholder:text-white/10 font-medium" 
+          className="bg-transparent border-none outline-none w-full text-[14px] text-slate-100 placeholder:text-slate-600 font-medium" 
         />
         <SuccessMark show={!!value && !error} />
       </div>
@@ -49,7 +48,7 @@ function Editor() {
   const [showFinal, setShowFinal] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [isMobilePreview, setIsMobilePreview] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'synced' | 'error'
+  const [saveStatus, setSaveStatus] = useState('idle');
   const [errors, setErrors] = useState([]); 
   const saveToastTimerRef = useRef(null);
 
@@ -92,83 +91,50 @@ function Editor() {
   };
 
   const [data, setData] = useState(() => {
-    // Check if starting from scratch
     const params = new URLSearchParams(location.search);
     const isScratchMode = params.get('scratch') === 'true';
-    
-    if (isScratchMode) {
-      return initialData; // Fresh start with empty strings
-    }
-    
-    // Try to get data from localStorage first
+    if (isScratchMode) return initialData;
     const localData = localStorage.getItem('pro_cv_complete_v5_final');
     if (localData) {
-      try {
-        return JSON.parse(localData);
-      } catch (e) {
-        console.warn('Invalid local data, using initial state');
-      }
+      try { return JSON.parse(localData); } catch (e) { console.warn('Invalid local data, using initial state'); }
     }
-    
-    return initialData; // Fallback to empty state
+    return initialData;
   });
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function hydrate() {
-      if (!user?.uid || isHydrated) return; // Only run once and if user exists
-      
-      // Skip Firestore fetch if user started from scratch
+      if (!user?.uid || isHydrated) return;
       if (isScratch) {
-        console.log('Starting from scratch - skipping Firestore fetch');
         setIsHydrated(true);
         return;
       }
-      
       try {
         let resume;
-        
-        // If blueprintId exists, fetch specific blueprint
         if (blueprintId) {
-          console.log('Fetching specific blueprint:', blueprintId);
           resume = await fetchBlueprint(user.uid, blueprintId);
         } else {
-          // Fallback to legacy behavior
-          console.log('Fetching most recent blueprint');
           resume = await fetchUserResume(user.uid);
         }
-        
         if (cancelled) return;
         if (resume.exists) {
           if (resume.template) setTemplate(resume.template);
-          if (resume.data) {
-            setData((prev) => ({
-              ...prev,
-              ...resume.data,
-            }));
-          }
+          if (resume.data) setData((prev) => ({ ...prev, ...resume.data }));
         }
       } catch (e) {
         if (!cancelled) {
-          console.error('Failed to fetch resume:', e);
-          if (e.code === 'permission-denied') {
-            toast.error('Permission denied. Please check your account settings.');
-          } else if (e.code === 'unavailable') {
-            toast.warning('Connection lost. Working in offline mode.');
-          } else {
-            toast.error('Failed to load your resume data.');
-          }
+          if (e.code === 'permission-denied') toast.error('Permission denied. Please check your account settings.');
+          else if (e.code === 'unavailable') toast.warning('Connection lost. Working in offline mode.');
+          else toast.error('Failed to load your resume data.');
         }
       } finally {
         if (!cancelled) setIsHydrated(true);
       }
     }
     hydrate();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.uid, isScratch, blueprintId]); // Add blueprintId to dependencies
+    return () => { cancelled = true; };
+  }, [user?.uid, isScratch, blueprintId]); 
 
   const loadSampleData = () => {
     const sample = {
@@ -203,7 +169,7 @@ function Editor() {
   };
 
   const steps = [
-    { id: 1, label: 'Contacts', desc: 'Add your contact info so recruiters can reach you.' },
+    { id: 1, label: 'Personal Info', desc: 'Add your contact info so recruiters can reach you.' },
     { id: 2, label: 'Experience', desc: 'Detail your professional journey.' },
     { id: 3, label: 'Education', desc: 'List your academic foundation.' },
     { id: 4, label: 'Skills', desc: 'Highlight your technical expertise.' },
@@ -237,78 +203,45 @@ function Editor() {
 
   useEffect(() => {
     if (!user?.uid || !isHydrated) return;
-
-    // Set saving status immediately
     setSaveStatus('saving');
-
     const t = setTimeout(async () => {
       try {
         setSaveStatus('saving');
-        
-        // Save to correct blueprint or create new one
         if (blueprintId) {
           await saveBlueprint(user.uid, blueprintId, { template, data });
-          console.log('Saved to blueprint:', blueprintId);
         } else if (isScratch) {
-          // For new scratch sessions, we need to create a blueprint first
-          // This should have been handled in TemplateSelector, but fallback here
           const { createBlueprint } = await import('./services/resumeService');
           const newBlueprintId = await createBlueprint(user.uid, template, data);
           setBlueprintId(newBlueprintId);
-          console.log('Created new blueprint:', newBlueprintId);
         } else {
-          // Fallback to legacy behavior
           await saveUserResume(user.uid, { template, data });
         }
-        
         setSaveStatus('synced');
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
       } catch (e) {
         setSaveStatus('error');
-        console.error('Failed to save resume:', e);
-        
-        // Show specific error messages based on error type
-        if (e.code === 'permission-denied') {
-          toast.error('Permission denied. Please check your account settings.');
-        } else if (e.code === 'unavailable') {
-          toast.warning('Connection lost. Your changes will sync when online.');
-        } else if (e.code === 'resource-exhausted') {
-          toast.error('Storage quota exceeded. Please free up some space.');
-        } else {
-          toast.error('Failed to save your changes. Please try again.');
-        }
-        
+        if (e.code === 'permission-denied') toast.error('Permission denied. Please check your account settings.');
+        else if (e.code === 'unavailable') toast.warning('Connection lost. Your changes will sync when online.');
+        else if (e.code === 'resource-exhausted') toast.error('Storage quota exceeded. Please free up some space.');
+        else toast.error('Failed to save your changes. Please try again.');
         if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current);
         saveToastTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
       } finally {
-        // Ensure save status is always reset
         setTimeout(() => setSaveStatus('idle'), 100);
       }
-    }, 1000); // Reduced delay for better UX
-
+    }, 1000);
     return () => {
       clearTimeout(t);
-      // Ensure save status is reset on cleanup
       setSaveStatus('idle');
     };
   }, [data, template, isHydrated, user?.uid, toast, blueprintId, isScratch]);
 
-  // Save template changes to Firestore
   useEffect(() => {
     if (!user?.uid || !isHydrated) return;
-    
     const saveTemplateChange = async () => {
-      try {
-        await saveUserResume(user.uid, { template, data });
-        console.log('Template change saved to Firestore:', template);
-      } catch (e) {
-        console.error('Failed to save template change:', e);
-        toast.error('Failed to update template selection.');
-      }
+      try { await saveUserResume(user.uid, { template, data }); } catch (e) {}
     };
-
-    // Debounce template changes
     const timer = setTimeout(saveTemplateChange, 1000);
     return () => clearTimeout(timer);
   }, [template, data, isHydrated, user?.uid, toast]);
@@ -331,16 +264,12 @@ function Editor() {
 
   const handleDownload = async () => {
     try {
-      // Mark blueprint as complete when downloading
       if (blueprintId && user?.uid) {
         await updateBlueprintStatus(user.uid, blueprintId, 'Complete');
         toast.success('Resume marked as complete');
       }
-      
-      // Trigger print dialog for PDF download
       window.print();
     } catch (error) {
-      console.error('Failed to update status:', error);
       toast.error('Failed to mark resume as complete');
     }
   };
@@ -366,215 +295,262 @@ function Editor() {
   };
 
   return (
-    <div className="min-h-screen h-screen bg-[#020617] flex flex-col font-sans overflow-hidden text-white">
+    <div className="min-h-screen h-screen bg-[#05050A] flex flex-col font-sans overflow-hidden text-slate-200">
       
       <style>{`
         @media print {
-          @page { 
-            size: A4; 
-            margin: 0 !important; 
-          }
-          
+          @page { size: A4; margin: 0 !important; }
           html, body { 
-            background: white !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            width: 210mm !important; 
-            height: 297mm !important; 
-            /* FIX: Prevent dimmed look by boosting contrast/brightness for PDF engines */
+            background: white !important; margin: 0 !important; padding: 0 !important; 
+            width: 210mm !important; height: 297mm !important; 
             filter: contrast(1.1) brightness(1.02) !important;
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
+            -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; 
           }
-
           body * { visibility: hidden; }
           .printable-resume, .printable-resume * { visibility: visible; }
-
           .printable-resume { 
-            position: absolute !important; 
-            left: 0 !important; 
-            top: 0 !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            width: 210mm !important; 
-            height: 297mm !important; 
-            transform: scale(1) !important; 
-            transform-origin: top left !important; 
-            border: none !important; 
-            box-shadow: none !important; 
-            overflow: hidden !important;
-            /* FIX: Ensure mobile blurs don't create grey/dimmed overlays */
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+            position: absolute !important; left: 0 !important; top: 0 !important; margin: 0 !important; padding: 0 !important; 
+            width: 210mm !important; height: 297mm !important; transform: scale(1) !important; transform-origin: top left !important; 
+            border: none !important; box-shadow: none !important; overflow: hidden !important;
+            backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
           }
-
           .no-print { display: none !important; }
         }
-
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        
         .stage-pattern {
-          background-color: #020617;
-          background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+          background-color: #05050A;
+          background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
           background-size: 40px 40px;
         }
       `}</style>
-      {/* Enhanced Save Status Indicator */}
-      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-6 py-3 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all duration-500 ${
+
+      {/* Saving Indicator */}
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[250] px-5 py-2 rounded-full font-semibold text-xs transition-all duration-500 shadow-xl backdrop-blur-md ${
         saveStatus === 'idle' ? '-translate-y-20 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
       } ${
-        saveStatus === 'saving' ? 'bg-amber-500 text-white' :
-        saveStatus === 'synced' ? 'bg-emerald-500 text-white' :
-        saveStatus === 'error' ? 'bg-rose-500 text-white' : ''
+        saveStatus === 'saving' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+        saveStatus === 'synced' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+        saveStatus === 'error' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : ''
       }`}>
-        {saveStatus === 'saving' && '⏳ Saving...'}
-        {saveStatus === 'synced' && '✅ All changes synced'}
-        {saveStatus === 'error' && '⚠️ Sync failed'}
+        <div className="flex items-center gap-2">
+          {saveStatus === 'saving' && <><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"/> Saving...</>}
+          {saveStatus === 'synced' && <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg> Synced</>}
+          {saveStatus === 'error' && <><div className="w-2 h-2 rounded-full bg-rose-400"/> Sync Failed</>}
+        </div>
       </div>
-      {/* Mobile Toggle Button (Fix: Added missing button) */}
+
       {!showFinal && (
         <button 
           onClick={() => setIsMobilePreview(!isMobilePreview)}
-          className="lg:hidden fixed bottom-32 right-6 z-[150] w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform"
+          className="lg:hidden fixed bottom-32 right-6 z-[150] w-14 h-14 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform text-white border border-indigo-500/50"
         >
-          <span className="text-xl">{isMobilePreview ? '✎' : '👁️'}</span>
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {isMobilePreview ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />}
+          </svg>
         </button>
       )}
 
       <div className="flex flex-1 overflow-hidden h-full">
         
         {/* LEFT COLUMN: FORM */}
-        <div className={`relative flex flex-col h-full transition-all duration-700 no-print ${showFinal ? 'w-0 opacity-0' : 'lg:w-[50%] w-full'} ${isMobilePreview ? 'hidden lg:flex' : 'flex'} border-r border-white/5 bg-[#020617]`}>
+        <div className={`relative flex flex-col h-full transition-all duration-700 no-print ${showFinal ? 'w-0 opacity-0' : 'lg:w-[45%] w-full max-w-[650px]'} ${isMobilePreview ? 'hidden lg:flex' : 'flex'} border-r border-white/5 bg-[#05050A] z-10 shadow-[5px_0_30px_rgba(0,0,0,0.5)]`}>
           
-          <div className="px-6 md:px-12 pt-10 pb-6 shrink-0 bg-[#020617]/80 backdrop-blur-md">
-            <button onClick={() => navigate('/')} className="mb-8 flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all">
-                <span className="text-indigo-400">←</span> EXIT ENGINE
-            </button>
+          <div className="px-6 md:px-10 pt-8 pb-6 shrink-0 bg-[#05050A]/90 backdrop-blur-xl border-b border-white/5">
+            <div className="flex justify-between items-center mb-6">
+              <button onClick={() => navigate('/blueprints')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-medium">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Dashboard
+              </button>
+            </div>
 
-            <div className="flex items-center justify-between gap-2 md:gap-3 mb-6 md:mb-8">
+            <div className="flex items-center justify-between gap-2 mb-6">
               {steps.map((s) => (
-                <div key={s.id} onClick={() => s.id <= step && setStep(s.id)} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${step >= s.id ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'bg-white/5'} cursor-pointer`} />
+                <div key={s.id} onClick={() => s.id <= step && setStep(s.id)} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s.id ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-white/5'} ${s.id <= step ? 'cursor-pointer hover:bg-indigo-400' : 'cursor-default'}`} />
               ))}
             </div>
             
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tighter mb-2">{steps[step-1].label}</h2>
-            <p className="text-slate-400 text-[10px] sm:text-[11px] md:text-[13px] leading-relaxed max-w-md italic mb-6">{steps[step-1].desc}</p>
-
-            {/* RESPONSIVE RESUME STRENGTH */}
-            <div className="mb-10 px-4 sm:px-6 py-4 bg-slate-900/60 border border-white/10 rounded-[20px] sm:rounded-[24px] backdrop-blur-3xl flex items-center justify-between shadow-2xl">
-                <span className="text-[8px] sm:text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em] sm:tracking-[0.3em]">RESUME STRENGTH</span>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="w-24 sm:w-48 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                      <div className="h-full bg-emerald-500 shadow-[0_0_20px_#10b981] transition-all duration-1000" style={{width: `${resumeScore}%`}}></div>
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-white/80">{resumeScore}%</span>
-                </div>
-            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-white mb-2">{steps[step-1].label}</h2>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-md">{steps[step-1].desc}</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 md:px-12 pb-12 scrollbar-hide space-y-10 md:space-y-12">
+          {/* Form Content Area */}
+          <div className="flex-1 overflow-y-auto px-6 md:px-10 py-8 scrollbar-hide space-y-10 relative">
+            
+            {/* Strength Bar */}
+            <div className="p-5 bg-white/[0.02] border border-white/10 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between shadow-sm gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                  <span className="text-xs font-semibold text-slate-300 uppercase tracking-widest">Profile Strength</span>
+                </div>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <div className="flex-1 sm:w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 transition-all duration-1000" style={{width: `${resumeScore}%`}}></div>
+                  </div>
+                  <span className="text-sm font-bold text-white whitespace-nowrap">{resumeScore}%</span>
+                </div>
+            </div>
+
             {!isHydrated ? (
               <FormSkeleton />
             ) : step === 1 && (
-              <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-8 md:space-y-10">
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 md:gap-6">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                {/* Changed gap to gap-6 to prevent merging */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <PremiumInput label="First Name" error={errors.includes('firstName')} value={data.firstName} onChange={(e)=>setData({...data, firstName:e.target.value})} />
                   <PremiumInput label="Last Name" error={errors.includes('lastName')} value={data.lastName} onChange={(e)=>setData({...data, lastName:e.target.value})} />
                   <div className="sm:col-span-2"><PremiumInput label="Professional Role" value={data.role} onChange={(e)=>setData({...data, role:e.target.value})} /></div>
-                  <PremiumInput label="Phone" value={data.phone} onChange={(e)=>setData({...data, phone:e.target.value})} />
                   <PremiumInput label="Email Address" error={errors.includes('email')} value={data.email} onChange={(e)=>setData({...data, email:e.target.value})} />
-                  <PremiumInput label="Location" value={data.city} onChange={(e)=>setData({...data, city:e.target.value})} />
+                  <PremiumInput label="Phone Number" value={data.phone} onChange={(e)=>setData({...data, phone:e.target.value})} />
+                  <PremiumInput label="City" value={data.city} onChange={(e)=>setData({...data, city:e.target.value})} />
                   <PremiumInput label="Country" value={data.country} onChange={(e)=>setData({...data, country:e.target.value})} />
                 </div>
-                <div className="space-y-4">
-                  <label className="text-[11px] font-bold text-slate-400 tracking-wide uppercase">Summary</label>
-                  <textarea value={data.summary} onChange={(e)=>setData({...data, summary:e.target.value})} className="w-full h-32 md:h-44 p-4 md:p-6 bg-slate-900/50 border border-white/10 rounded-2xl outline-none focus:border-indigo-500 text-[13px] leading-relaxed resize-none transition-all" />
+                <div className="space-y-3">
+                  <label className="text-[11px] font-semibold text-slate-400 tracking-wide ml-1">Professional Summary</label>
+                  <textarea value={data.summary} onChange={(e)=>setData({...data, summary:e.target.value})} className="w-full h-32 p-4 bg-white/[0.02] border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:bg-white/[0.04] text-[14px] text-slate-100 leading-relaxed resize-none transition-all shadow-sm focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]" placeholder="Briefly describe your expertise and career goals..." />
                 </div>
-                <div className="p-6 border-2 border-dashed border-white/10 bg-white/[0.02] rounded-3xl flex items-center justify-between">
-                  <div className="flex items-center gap-4 sm:gap-6">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-800 rounded-2xl overflow-hidden ring-2 ring-indigo-500/20">{data.photo && <img src={data.photo} className="w-full h-full object-cover" alt="Profile"/>}</div>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Portrait</p>
+                <div className="p-6 border border-dashed border-white/20 bg-white/[0.01] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/[0.02] transition-colors gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/5 rounded-xl overflow-hidden ring-1 ring-white/10 flex items-center justify-center text-slate-500 shrink-0">
+                      {data.photo ? <img src={data.photo} className="w-full h-full object-cover" alt="Profile"/> : <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Profile Photo</p>
+                      <p className="text-xs text-slate-500">JPG, PNG (Max 2MB)</p>
+                    </div>
                   </div>
-                  <label className="text-[10px] font-black uppercase text-indigo-400 cursor-pointer">Choose <input type="file" hidden onChange={handlePhoto}/></label>
+                  <label className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-semibold text-white cursor-pointer transition-colors text-center">
+                    Upload
+                    <input type="file" hidden onChange={handlePhoto}/>
+                  </label>
                 </div>
               </div>
             )}
+            
             {step === 2 && (
-              <div className="animate-in slide-in-from-right-10 duration-700 space-y-10">
+              <div className="animate-in slide-in-from-right-4 duration-500 space-y-8">
                  {data.experience.map((exp, i) => (
-                   <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl relative group space-y-6 md:space-y-8 transition-all hover:border-white/20">
-                      <button onClick={()=>removeRow('experience', i)} className="absolute top-6 right-6 text-white/20 hover:text-rose-500 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-colors">Delete Entry</button>
-                      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-6 pt-4 md:pt-0">
-                         <PremiumInput label="Organization" value={exp.company} onChange={(e)=>updateList('experience', i, 'company', e.target.value)} />
-                         <PremiumInput label="Role" value={exp.role} onChange={(e)=>updateList('experience', i, 'role', e.target.value)} />
-                         <PremiumInput label="Start Date" value={exp.startDate} onChange={(e)=>updateList('experience', i, 'startDate', e.target.value)} />
+                   <div key={i} className="p-6 bg-white/[0.02] border border-white/10 rounded-2xl relative group space-y-6 transition-all hover:border-white/20">
+                      <button onClick={()=>removeRow('experience', i)} className="absolute top-6 right-6 text-slate-500 hover:text-rose-400 transition-colors" title="Remove Entry">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                         <div className="sm:col-span-2"><PremiumInput label="Company Name" value={exp.company} onChange={(e)=>updateList('experience', i, 'company', e.target.value)} /></div>
+                         <PremiumInput label="Job Title" value={exp.role} onChange={(e)=>updateList('experience', i, 'role', e.target.value)} />
+                         <PremiumInput label="Location (Optional)" value={exp.location} onChange={(e)=>updateList('experience', i, 'location', e.target.value)} />
+                         <PremiumInput label="Start Date (e.g. 2020)" value={exp.startDate} onChange={(e)=>updateList('experience', i, 'startDate', e.target.value)} />
                          {!exp.isPresent && <PremiumInput label="End Date" value={exp.endDate} onChange={(e)=>updateList('experience', i, 'endDate', e.target.value)} />}
-                         <div className="sm:col-span-2 flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
-                            <input type="checkbox" checked={exp.isPresent} onChange={(e)=>updateList('experience', i, 'isPresent', e.target.checked)} className="w-4 h-4 accent-indigo-500" />
-                            <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase">Currently Working Here</span>
+                         
+                         <label className="sm:col-span-2 flex items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-xl cursor-pointer hover:bg-white/5 transition-colors w-full sm:w-max mt-2">
+                            <input type="checkbox" checked={exp.isPresent} onChange={(e)=>updateList('experience', i, 'isPresent', e.target.checked)} className="w-4 h-4 accent-indigo-500 rounded bg-transparent border-white/20" />
+                            <span className="text-sm font-medium text-slate-300">I currently work here</span>
+                         </label>
+                         
+                         <div className="sm:col-span-2 space-y-2 mt-2">
+                           <label className="text-[11px] font-semibold text-slate-400 ml-1">Key Responsibilities & Achievements</label>
+                           <textarea className="w-full bg-white/[0.02] border border-white/10 p-4 rounded-xl h-32 text-sm outline-none focus:border-indigo-500 focus:bg-white/[0.04] transition-all text-slate-100 resize-none" placeholder="Bullet points work best..." value={exp.desc} onChange={(e)=>updateList('experience', i, 'desc', e.target.value)} />
                          </div>
-                         <textarea className="sm:col-span-2 bg-transparent border border-white/10 p-4 md:p-6 rounded-2xl h-32 md:h-40 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="Key achievements and impact..." value={exp.desc} onChange={(e)=>updateList('experience', i, 'desc', e.target.value)} />
                       </div>
                    </div>
                  ))}
-                 <button onClick={()=>addRow('experience', {company:'', role:'', location:'', startDate:'', endDate:'', desc:'', isPresent:false})} className="w-full p-4 md:p-5 bg-white/5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-white/10 hover:border-indigo-500 transition-all shadow-lg">+ Add Position</button>
+                 <button onClick={()=>addRow('experience', {company:'', role:'', location:'', startDate:'', endDate:'', desc:'', isPresent:false})} className="w-full py-4 bg-white/[0.02] border border-dashed border-white/20 rounded-xl text-sm font-semibold text-indigo-400 hover:bg-white/[0.05] hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2">
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                   Add Another Position
+                 </button>
               </div>
             )}
+            
             {step === 3 && (
-              <div className="animate-in slide-in-from-right-10 duration-700 space-y-10">
+              <div className="animate-in slide-in-from-right-4 duration-500 space-y-8">
                  {data.education.map((edu, i) => (
-                   <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl relative group space-y-6 sm:grid sm:grid-cols-2 sm:gap-6">
-                      <button onClick={()=>removeRow('education', i)} className="absolute top-6 right-6 text-white/20 hover:text-rose-500 text-[8px] md:text-[9px] font-black uppercase tracking-widest">Delete</button>
-                      <div className="pt-4 md:pt-0"><PremiumInput label="Institution" value={edu.school} onChange={(e)=>updateList('education', i, 'school', e.target.value)} /></div>
-                      <PremiumInput label="Degree / Diploma" value={edu.degree} onChange={(e)=>updateList('education', i, 'degree', e.target.value)} />
-                      <PremiumInput label="GPA / Grade" value={edu.gpa} onChange={(e)=>updateList('education', i, 'gpa', e.target.value)} />
-                      <PremiumInput label="Completion" value={edu.endDate} onChange={(e)=>updateList('education', i, 'endDate', e.target.value)} />
+                   <div key={i} className="p-6 bg-white/[0.02] border border-white/10 rounded-2xl relative group space-y-6">
+                      <button onClick={()=>removeRow('education', i)} className="absolute top-6 right-6 text-slate-500 hover:text-rose-400 transition-colors">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                        <div className="sm:col-span-2"><PremiumInput label="Institution / University" value={edu.school} onChange={(e)=>updateList('education', i, 'school', e.target.value)} /></div>
+                        <PremiumInput label="Degree / Field of Study" value={edu.degree} onChange={(e)=>updateList('education', i, 'degree', e.target.value)} />
+                        <PremiumInput label="Graduation Year" value={edu.endDate} onChange={(e)=>updateList('education', i, 'endDate', e.target.value)} />
+                        <PremiumInput label="GPA / Grade (Optional)" value={edu.gpa} onChange={(e)=>updateList('education', i, 'gpa', e.target.value)} />
+                      </div>
                    </div>
                  ))}
-                 <button onClick={()=>addRow('education', { school: '', degree: '', field: '', location: '', startDate: '', endDate: '', gpa: '' })} className="w-full p-4 md:p-5 bg-white/5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-white/10 hover:border-indigo-500 transition-all">+ Add Education</button>
+                 <button onClick={()=>addRow('education', { school: '', degree: '', field: '', location: '', startDate: '', endDate: '', gpa: '' })} className="w-full py-4 bg-white/[0.02] border border-dashed border-white/20 rounded-xl text-sm font-semibold text-indigo-400 hover:bg-white/[0.05] hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2">
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                   Add Education
+                 </button>
               </div>
             )}
+            
             {step === 4 && (
-              <div className="animate-in slide-in-from-right-10 duration-700 space-y-8 md:space-y-10">
+              <div className="animate-in slide-in-from-right-4 duration-500 space-y-6">
                  {data.hardSkills.map((s, i) => (
-                   <div key={i} className="flex flex-col sm:flex-row gap-6 md:gap-10 items-center p-6 md:p-8 bg-white/5 border border-white/10 rounded-2xl group transition-all hover:bg-white/[0.08] relative">
-                     <input className="w-full sm:flex-1 bg-transparent border-none outline-none font-bold text-lg md:text-xl placeholder:text-white/10" value={s.name} onChange={(e)=>updateList('hardSkills', i, 'name', e.target.value)} placeholder="Enter Skill Name..." />
-                     <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto justify-between sm:justify-end">
-                        <span className="text-[9px] md:text-[10px] font-mono text-indigo-400 w-8 md:w-10">{s.level}%</span>
-                        <input type="range" value={s.level} onChange={(e)=>updateList('hardSkills', i, 'level', e.target.value)} className="accent-indigo-500 w-32 md:w-40 cursor-pointer" />
+                   <div key={i} className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center p-5 bg-white/[0.02] border border-white/10 rounded-xl group relative">
+                     <div className="w-full sm:flex-1">
+                       <input className="w-full bg-transparent border-b border-white/10 focus:border-indigo-500 outline-none pb-2 font-medium text-base placeholder:text-slate-600 transition-colors text-white" value={s.name} onChange={(e)=>updateList('hardSkills', i, 'name', e.target.value)} placeholder="e.g. React.js, Project Management" />
                      </div>
-                     <button onClick={()=>removeRow('hardSkills', i)} className="absolute top-2 right-4 sm:static text-white/20 hover:text-rose-500 text-xl md:text-2xl font-black transition-colors">×</button>
+                     <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                        <span className="text-xs font-semibold text-indigo-400 w-10 text-right">{s.level}%</span>
+                        <input type="range" value={s.level} onChange={(e)=>updateList('hardSkills', i, 'level', e.target.value)} className="accent-indigo-500 w-full sm:w-32 cursor-pointer h-1.5 bg-white/10 rounded-lg appearance-none" />
+                     </div>
+                     <button onClick={()=>removeRow('hardSkills', i)} className="absolute top-2 right-2 sm:static text-slate-500 hover:text-rose-400 transition-colors p-2">
+                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                     </button>
                    </div>
                  ))}
-                 <button onClick={()=>addRow('hardSkills', {name:'', level:50})} className="w-full p-4 md:p-5 bg-white/5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-white/10 hover:border-indigo-500 transition-all">+ Add Proficiency</button>
+                 <button onClick={()=>addRow('hardSkills', {name:'', level:50})} className="w-full py-4 bg-white/[0.02] border border-dashed border-white/20 rounded-xl text-sm font-semibold text-indigo-400 hover:bg-white/[0.05] hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2">
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                   Add Skill
+                 </button>
               </div>
             )}
+            
             {step === 5 && (
-              <div className="animate-in slide-in-from-right-10 duration-700 space-y-12 md:space-y-16 pb-12">
-                 <div className="space-y-8 md:space-y-10">
-                   <div className="flex justify-between items-center"><h4 className="text-[10px] md:text-[11px] font-black text-white/30 uppercase tracking-[0.4em]">Featured Projects</h4><button onClick={()=>addRow('projects', { title: '', link: '', desc: '' })} className="text-[9px] md:text-[10px] font-bold text-indigo-400">+ Add</button></div>
+              <div className="animate-in slide-in-from-right-4 duration-500 space-y-12 pb-8">
+                 <div className="space-y-6">
+                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                     <h4 className="text-sm font-semibold text-white">Projects</h4>
+                     <button onClick={()=>addRow('projects', { title: '', link: '', desc: '' })} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">+ Add Project</button>
+                   </div>
                    {data.projects.map((proj, i) => (
-                     <div key={i} className="p-6 md:p-8 bg-white/5 border border-white/10 rounded-3xl space-y-4 md:space-y-6">
-                        <PremiumInput label="Project Label" value={proj.title} onChange={(e)=>updateList('projects', i, 'title', e.target.value)} />
-                        <PremiumInput label="Live URL" value={proj.link} onChange={(e)=>updateList('projects', i, 'link', e.target.value)} />
-                        <textarea className="w-full bg-transparent border border-white/10 p-4 md:p-6 rounded-2xl h-24 text-sm outline-none focus:border-indigo-500 transition-all" placeholder="Brief project summary..." value={proj.desc} onChange={(e)=>updateList('projects', i, 'desc', e.target.value)} />
+                     <div key={i} className="p-5 bg-white/[0.02] border border-white/10 rounded-2xl space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          <PremiumInput label="Project Name" value={proj.title} onChange={(e)=>updateList('projects', i, 'title', e.target.value)} />
+                          <PremiumInput label="Live URL / Repository" value={proj.link} onChange={(e)=>updateList('projects', i, 'link', e.target.value)} />
+                        </div>
+                        <textarea className="w-full bg-white/[0.02] border border-white/10 p-4 rounded-xl h-24 text-sm outline-none focus:border-indigo-500 focus:bg-white/[0.04] transition-all text-slate-100 resize-none" placeholder="Brief project description..." value={proj.desc} onChange={(e)=>updateList('projects', i, 'desc', e.target.value)} />
                      </div>
                    ))}
                  </div>
-                 <div className="space-y-8 md:space-y-10">
-                   <div className="flex justify-between items-center"><h4 className="text-[10px] md:text-[11px] font-black text-white/30 uppercase tracking-[0.4em]">Languages</h4><button onClick={()=>addRow('languages', { name: '', level: 'Fluent' })} className="text-[9px] md:text-[10px] font-bold text-indigo-400">+ Add</button></div>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                 
+                 <div className="space-y-4">
+                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                     <h4 className="text-sm font-semibold text-white">Languages</h4>
+                     <button onClick={()=>addRow('languages', { name: '', level: 'Fluent' })} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">+ Add Language</button>
+                   </div>
+                   <div className="flex flex-wrap gap-3">
                      {data.languages.map((l, i) => (
-                       <div key={i} className="flex gap-2 p-2 bg-white/5 border border-white/5 rounded-xl group transition-all hover:border-white/20"><input placeholder="e.g. English" value={l.name} onChange={(e)=>updateList('languages', i, 'name', e.target.value)} className="flex-1 bg-transparent p-2 outline-none text-sm" /><button onClick={()=>removeRow('languages', i)} className="px-2 text-white/20 hover:text-rose-500">×</button></div>
+                       <div key={i} className="flex items-center gap-2 p-1.5 pl-3 bg-white/[0.05] border border-white/10 rounded-lg group">
+                         <input placeholder="e.g. Spanish" value={l.name} onChange={(e)=>updateList('languages', i, 'name', e.target.value)} className="w-24 sm:w-32 bg-transparent outline-none text-sm font-medium placeholder:text-slate-500" />
+                         <button onClick={()=>removeRow('languages', i)} className="p-1 text-slate-500 hover:text-rose-400 transition-colors bg-white/5 rounded-md">
+                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                         </button>
+                       </div>
                      ))}
                    </div>
                  </div>
-                 <div className="space-y-8 md:space-y-10">
-                   <div className="flex justify-between items-center"><h4 className="text-[10px] md:text-[11px] font-black text-white/30 uppercase tracking-[0.4em]">Custom Sections</h4><button onClick={()=>addRow('customSections', { title: '', content: '' })} className="text-[9px] md:text-[10px] font-bold text-indigo-400">+ New Segment</button></div>
+
+                 <div className="space-y-6">
+                   <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                     <h4 className="text-sm font-semibold text-white">Custom Sections</h4>
+                     <button onClick={()=>addRow('customSections', { title: '', content: '' })} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">+ Add Section</button>
+                   </div>
                    {data.customSections.map((sec, i) => (
-                     <div key={i} className="p-6 md:p-10 bg-indigo-500/5 border border-indigo-500/10 rounded-[30px] md:rounded-[40px] space-y-4 md:space-y-6">
-                        <input placeholder="Segment Title (e.g. Awards)" value={sec.title} onChange={(e)=>updateList('customSections', i, 'title', e.target.value)} className="w-full bg-transparent border-none outline-none font-black text-xl md:text-2xl text-white placeholder:text-white/10" />
-                        <textarea placeholder="List details here..." value={sec.content} onChange={(e)=>updateList('customSections', i, 'content', e.target.value)} className="w-full bg-transparent border-none outline-none text-white/50 text-[13px] md:text-sm h-28 md:h-32 resize-none italic leading-loose" />
+                     <div key={i} className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl space-y-4 relative">
+                        <button onClick={()=>removeRow('customSections', i)} className="absolute top-4 right-4 text-slate-500 hover:text-rose-400 transition-colors p-1">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                        <input placeholder="Title (e.g. Awards)" value={sec.title} onChange={(e)=>updateList('customSections', i, 'title', e.target.value)} className="w-full sm:w-[80%] bg-transparent border-b border-indigo-500/30 outline-none font-bold text-lg text-white placeholder:text-indigo-200/30 pb-1 focus:border-indigo-400 transition-colors" />
+                        <textarea placeholder="Section details..." value={sec.content} onChange={(e)=>updateList('customSections', i, 'content', e.target.value)} className="w-full bg-transparent border-none outline-none text-slate-300 text-sm h-24 resize-none leading-relaxed placeholder:text-slate-600 mt-2" />
                      </div>
                    ))}
                  </div>
@@ -582,41 +558,47 @@ function Editor() {
             )}
           </div>
 
-          <div className="h-24 sm:h-28 bg-[#020617] border-t border-white/10 flex items-center justify-between px-6 sm:px-10 shrink-0 sticky bottom-0 z-[110] shadow-2xl">
-              <div className="flex gap-2 sm:gap-4 items-center">
-                 <button onClick={()=>setStep(s=>Math.max(1, s-1))} className={`text-white/20 font-black uppercase text-[8px] sm:text-[10px] tracking-widest px-2 sm:px-4 transition-all ${step === 1 ? 'hidden' : 'hover:text-white'}`}>Back</button>
-                 <button onClick={loadSampleData} className="text-emerald-400 font-black text-[8px] sm:text-[9px] uppercase border border-emerald-500/20 px-2 sm:px-4 py-2 rounded-lg hover:bg-emerald-500/10 transition-all">Fill</button>
-                 <button onClick={handleBackup} className="hidden sm:block text-indigo-400 font-bold text-[9px] uppercase hover:text-white transition-all">Backup</button>
-                 <button onClick={resetData} className="text-rose-400 font-bold text-[8px] sm:text-[9px] uppercase hover:text-white transition-all">Reset</button>
+          <div className="p-4 sm:p-6 bg-[#05050A] border-t border-white/5 flex flex-wrap items-center justify-between shrink-0 z-20 gap-4">
+              <div className="flex items-center gap-2">
+                 <button onClick={()=>setStep(s=>Math.max(1, s-1))} className={`px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors ${step === 1 ? 'invisible' : ''}`}>
+                   Back
+                 </button>
+                 <button onClick={loadSampleData} className="px-4 py-2 text-xs font-semibold text-slate-400 border border-white/10 rounded-lg hover:bg-white/5 hover:text-white transition-all hidden sm:block">Fill Sample</button>
               </div>
-              <button 
-                onClick={handleNextStep} 
-                className="px-6 sm:px-14 py-3 sm:py-4 rounded-2xl bg-indigo-600 text-white font-black text-[9px] sm:text-[11px] uppercase tracking-[0.2em] transition-transform active:scale-95"
-              >
-                {step === 5 ? 'Final Draft' : 'Next Step'}
-              </button>
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                 <button onClick={resetData} className="px-4 py-2 text-sm font-medium text-rose-400 hover:text-rose-300 transition-colors hidden sm:block">Reset</button>
+                 <button 
+                   onClick={handleNextStep} 
+                   className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all flex items-center justify-center gap-2 active:scale-95 w-full sm:w-auto"
+                 >
+                   {step === 5 ? 'Review Final' : 'Next Step'}
+                   {step !== 5 && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>}
+                 </button>
+              </div>
           </div>
         </div>
 
         {/* RIGHT COLUMN: PROFESSIONAL PREVIEW STAGE */}
-        <div className={`flex-1 flex flex-col h-full items-center transition-all duration-1000 overflow-y-auto scrollbar-hide 
-          ${showFinal ? 'p-0 bg-[#020617] stage-pattern' : 'p-6 lg:p-12 lg:pt-10 bg-[#020617]'} 
-          ${!isMobilePreview && !showFinal ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`flex-1 flex flex-col h-full items-center transition-all duration-700 overflow-y-auto scrollbar-hide 
+          ${showFinal ? 'p-0 bg-[#05050A] stage-pattern' : 'p-6 lg:p-10 bg-[#05050A]'} 
+          ${!isMobilePreview && !showFinal ? 'hidden lg:flex' : 'flex'} relative`}>
           
           {!showFinal ? (
             /* --- EDITING MODE PREVIEW --- */
-            <div className="flex flex-col items-center gap-6 mb-14 shrink-0 no-print w-full max-w-4xl">
-               <div className="w-full flex items-center justify-center mb-4">
-                  <div className="px-3 sm:px-4 py-2 sm:py-3 bg-slate-900/60 border border-white/10 rounded-[28px] backdrop-blur-3xl flex items-center gap-1 sm:gap-2 shadow-2xl overflow-x-auto scrollbar-hide">
+            <div className="flex flex-col items-center gap-6 pb-20 w-full max-w-4xl pt-4">
+               {/* Template Tabs */}
+               <div className="w-full flex justify-center mb-2 z-10 sticky top-0">
+                  <div className="p-1.5 bg-white/[0.03] border border-white/5 rounded-2xl backdrop-blur-xl flex items-center shadow-lg overflow-x-auto scrollbar-hide max-w-full">
                     {['executive', 'modernist', 'creative', 'simple', 'astraea'].map((t) => (
-                      <button key={t} onClick={() => setTemplate(t)} className={`whitespace-nowrap px-4 sm:px-6 py-1.5 sm:py-2 text-[8px] sm:text-[9px] font-black rounded-[18px] transition-all uppercase tracking-[0.1em] ${template === t ? 'bg-white text-black shadow-white shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'text-white/40 hover:text-white'}`}>{t}</button>
+                      <button key={t} onClick={() => setTemplate(t)} className={`whitespace-nowrap px-5 py-2 text-xs font-semibold rounded-xl transition-all capitalize ${template === t ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{t}</button>
                     ))}
                   </div>
                </div>
+               
                {!isHydrated ? (
                <ResumePreviewSkeleton />
              ) : (
-               <div className={`bg-white shadow-2xl transition-all duration-1000 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.4] sm:scale-[0.55]' : 'w-[210mm] scale-[0.6]'} origin-top ring-1 ring-white/10 shadow-[0_0_120px_rgba(0,0,0,0.9)]`} style={{minHeight: '297mm'}}>
+               <div className={`bg-white shadow-2xl transition-all duration-500 relative overflow-hidden printable-resume ${isMobilePreview ? 'w-[210mm] scale-[0.45] origin-top' : 'w-[210mm] scale-[0.6] xl:scale-[0.75] origin-top'} ring-1 ring-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-sm`} style={{minHeight: '297mm', marginBottom: '-25%'}}>
                  <div className="print:m-0 h-full">
                    {template === 'executive' && <ExecutiveTemplate data={data} />}
                    {template === 'modernist' && <ModernistTemplate data={data} />}
@@ -629,17 +611,43 @@ function Editor() {
             </div>
           ) : (
             /* --- ENHANCED FINAL STAGE --- */
-            <div className="w-full flex-1 flex flex-col items-center py-12 md:py-20 animate-in fade-in duration-1000">
-               <div className="mb-12 flex flex-col items-center gap-4 no-print">
-                 <h3 className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.5em] animate-pulse text-center">Generation Complete</h3>
-                 <h2 className="text-2xl sm:text-3xl font-black text-white italic text-center px-4">Your Resume is Ready.</h2>
+            <div className="w-full flex-1 flex flex-col items-center py-12 md:py-20 animate-in fade-in duration-700">
+               
+               <div className="mb-14 flex flex-col items-center gap-5 no-print text-center px-4 w-full max-w-3xl">
+                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-[10px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Document Finalized
+                 </div>
+                 
+                 <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                   Your Professional <br className="md:hidden" /> Blueprint is Ready.
+                 </h2>
+                 
+                 <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-xl">
+                   Our system has successfully compiled your professional data into a high-performance, ATS-compliant PDF document. Review the final render below.
+                 </p>
+                 
+                 <div className="flex items-center justify-center gap-6 mt-4 p-5 bg-white/[0.02] border border-white/5 rounded-2xl w-full sm:w-auto backdrop-blur-sm">
+                   <div className="flex flex-col items-center gap-1">
+                     <span className="text-indigo-400 font-bold text-2xl">{resumeScore}%</span>
+                     <span className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">ATS Score</span>
+                   </div>
+                   <div className="w-px h-10 bg-white/10" />
+                   <div className="flex flex-col items-center gap-1">
+                     <span className="text-indigo-400 font-bold text-2xl capitalize">{template}</span>
+                     <span className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Framework</span>
+                   </div>
+                   <div className="w-px h-10 bg-white/10" />
+                   <div className="flex flex-col items-center gap-1">
+                     <span className="text-emerald-400 font-bold text-2xl flex items-center gap-1">
+                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                     </span>
+                     <span className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Validation</span>
+                   </div>
+                 </div>
                </div>
 
-               <div className="printable-resume w-[210mm] scale-[0.45] sm:scale-[0.7] md:scale-[0.95] lg:scale-100 bg-white mb-32 origin-top transition-all duration-700" 
-                 style={{
-                   minHeight: '297mm', 
-                   boxShadow: '0 50px 100px -20px rgba(0,0,0,0.9), 0 0 50px -10px rgba(99,102,241,0.2)'
-                 }}>
+               <div className="printable-resume w-[210mm] scale-[0.45] sm:scale-[0.7] md:scale-[0.85] lg:scale-100 bg-white mb-40 origin-top transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_40px_rgba(99,102,241,0.15)] rounded-sm" 
+                 style={{ minHeight: '297mm' }}>
                  <div className="print:m-0 h-full">
                     {template === 'executive' && <ExecutiveTemplate data={data} />}
                     {template === 'modernist' && <ModernistTemplate data={data} />}
@@ -650,10 +658,14 @@ function Editor() {
                </div>
 
                {/* FINAL ACTION DOCK */}
-               <div className="fixed bottom-6 md:bottom-10 flex flex-col sm:flex-row items-center gap-3 md:gap-4 left-1/2 -translate-x-1/2 no-print z-[300] bg-slate-900/90 backdrop-blur-3xl p-4 rounded-[32px] border border-white/10 shadow-2xl w-[90%] sm:w-auto">
-                  <button onClick={()=>setShowFinal(false)} className="w-full sm:w-auto bg-white/5 text-white/50 border border-white/10 px-8 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-all">Revise Entry</button>
-                  <button onClick={handleDownload} className="w-full sm:w-auto bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:bg-indigo-500 transition-all flex items-center justify-center gap-3 active:scale-95">
-                    DOWNLOAD PDF
+               <div className="fixed bottom-8 flex flex-col sm:flex-row items-center gap-3 left-1/2 -translate-x-1/2 no-print z-[300] bg-[#05050A]/95 backdrop-blur-xl p-3.5 rounded-[20px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-[90%] sm:w-auto">
+                  <button onClick={()=>setShowFinal(false)} className="w-full sm:w-auto bg-white/[0.03] text-slate-300 hover:text-white hover:bg-white/[0.06] border border-white/5 px-6 py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    Continue Editing
+                  </button>
+                  <button onClick={handleDownload} className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-8 py-3.5 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download PDF
                   </button>
                </div>
             </div>
@@ -661,7 +673,6 @@ function Editor() {
         </div>
       </div>
       
-      {/* Toast Notifications */}
       <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
     </div>
   );
