@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './components/Dashboard';
 import AccountSettings from './pages/AccountSettings';
+import ForgotPassword from './pages/ForgotPassword';
+import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
 
@@ -19,6 +21,7 @@ function App() {
           <Route path="/select" element={<TemplateSelector />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route
             path="/blueprints"
             element={
@@ -43,6 +46,7 @@ function App() {
               </RequireAuth>
             }
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>

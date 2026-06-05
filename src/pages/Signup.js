@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { serverTimestamp } from 'firebase/firestore';
 import { auth } from '../lib/firebase';
 import { upsertUserProfile } from '../services/userService';
+import { signInWithGoogle, friendlyAuthError } from '../services/authService';
+import GoogleButton from '../components/GoogleButton';
 
 function LogoMark() {
   return (
@@ -64,7 +66,19 @@ export default function Signup() {
       }
       navigate('/select', { replace: true });
     } catch (err) {
-      setError(err?.message || 'Signup failed. Please try again.');
+      setError(friendlyAuthError(err, 'Signup failed. Please try again.'));
+      setSubmitting(false);
+    }
+  };
+
+  const onGoogle = async () => {
+    setError('');
+    setSubmitting(true);
+    try {
+      await signInWithGoogle();
+      navigate('/select', { replace: true });
+    } catch (err) {
+      setError(friendlyAuthError(err, 'Google sign-up failed. Please try again.'));
       setSubmitting(false);
     }
   };
@@ -195,6 +209,14 @@ export default function Signup() {
               >
                 {submitting ? 'Creating…' : 'Sign Up'}
               </button>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              <GoogleButton onClick={onGoogle} disabled={submitting} label="Sign up with Google" />
 
               <div className="flex items-center justify-between gap-4 pt-2">
                 <Link to="/" className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-colors">

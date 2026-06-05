@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { signInWithGoogle, friendlyAuthError } from '../services/authService';
+import GoogleButton from '../components/GoogleButton';
 
 function LogoMark() {
   return (
@@ -41,7 +43,19 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(err?.message || 'Login failed. Please try again.');
+      setError(friendlyAuthError(err, 'Login failed. Please try again.'));
+      setSubmitting(false);
+    }
+  };
+
+  const onGoogle = async () => {
+    setError('');
+    setSubmitting(true);
+    try {
+      await signInWithGoogle();
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setError(friendlyAuthError(err, 'Google sign-in failed. Please try again.'));
       setSubmitting(false);
     }
   };
@@ -110,9 +124,17 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-                  Password
-                </label>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                    Password
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[9px] font-black uppercase tracking-[0.25em] text-indigo-400 hover:text-white transition-colors"
+                  >
+                    Forgot?
+                  </Link>
+                </div>
                 <input
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -137,6 +159,14 @@ export default function Login() {
               >
                 {submitting ? 'Authenticating…' : 'Login'}
               </button>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              <GoogleButton onClick={onGoogle} disabled={submitting} label="Sign in with Google" />
 
               <div className="flex items-center justify-between gap-4 pt-2">
                 <Link to="/" className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-colors">
