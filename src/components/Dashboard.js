@@ -136,7 +136,7 @@ const Dashboard = () => {
               <span className="text-white font-bold text-xl leading-none">R</span>
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-              ResumeWise
+              Resume Builder
             </span>
           </div>
 
@@ -207,7 +207,7 @@ const Dashboard = () => {
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
             <span className="text-white font-bold text-sm">R</span>
           </div>
-          <span className="text-lg font-bold text-white">ResumeWise</span>
+          <span className="text-lg font-bold text-white">Resume Builder</span>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-400 hover:text-white">
           <Icons.Menu />

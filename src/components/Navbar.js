@@ -31,10 +31,10 @@ function LogoMark() {
       </div>
       <div className="flex flex-col leading-none">
         <span className="text-lg md:text-xl font-black italic tracking-tighter text-white uppercase">
-          Resume<span className="text-indigo-500">Wise</span>
+          Resume<span className="text-indigo-500"> Builder</span>
         </span>
         <span className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.5em] text-slate-500">
-          Genesis Engine
+          Cloud Resume Platform
         </span>
       </div>
     </div>

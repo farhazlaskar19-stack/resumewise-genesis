@@ -15,9 +15,9 @@ const LogoArchitect = ({ onClick }) => (
     </div>
     <div className="flex flex-col text-left">
       <span className="text-lg md:text-xl font-black italic tracking-tighter leading-none text-white uppercase group-hover:text-indigo-400 transition-colors">
-        Resume<span className="text-indigo-500 group-hover:text-white transition-colors">Wise</span>
+        Resume<span className="text-indigo-500 group-hover:text-white transition-colors"> Builder</span>
       </span>
-      <span className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.5em] text-slate-500 group-hover:text-slate-300 transition-colors">Genesis Core V1.0</span>
+      <span className="text-[6px] md:text-[7px] font-black uppercase tracking-[0.5em] text-slate-500 group-hover:text-slate-300 transition-colors">Cloud Resume Platform</span>
     </div>
   </div>
 );
@@ -141,7 +141,7 @@ function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">✨ Genesis Architecture Core</span>
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">✨ Cloud Resume Platform</span>
           </motion.div>
 
           <motion.h1 
@@ -281,7 +281,7 @@ function LandingPage() {
                <div className="w-2 h-2 rounded-full bg-red-500/50" />
                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
                <div className="w-2 h-2 rounded-full bg-emerald-500/50" />
-               <span className="ml-4 text-[8px] text-slate-500 uppercase tracking-widest">genesis_parser_v1.log</span>
+               <span className="ml-4 text-[8px] text-slate-500 uppercase tracking-widest">resume_parser_v1.log</span>
             </div>
 
             {/* Scrolling Code Stream */}
@@ -305,7 +305,7 @@ function LandingPage() {
     "encryption": "AES_256",
     "storage": "LOCAL_STORAGE"
   },
-  "engine": "Genesis Core V1.0",
+  "engine": "Resume Builder Core V1.0",
   "status": "VALIDATED",
   "export_format": "PDF_VECTOR",
   "metadata_cluster": {
@@ -517,7 +517,7 @@ function LandingPage() {
             { phase: "Phase 01", label: "Logic Foundation", desc: "Core PDF rendering logic and JSON schema validation developed for cross-platform data integrity." },
             { phase: "Phase 02", label: "Fluid Engine", desc: "Deep integration of Framer Motion for hardware-accelerated feedback and real-time state syncing." },
             { phase: "Phase 03", label: "Glass Design", desc: "Architecting the V7 Premium UI system with advanced backdrop-blur filters and vector-based styling." },
-            { phase: "Phase 04", label: "Genesis Final", desc: "Production-ready build featuring scientific eye-tracking layouts and full ATS parsing simulation." }
+            { phase: "Phase 04", label: "Final Build", desc: "Production-ready build featuring scientific eye-tracking layouts and full ATS parsing simulation." }
          ].map((item, idx) => (
             <div key={idx} className={`flex items-center gap-12 md:gap-20 ${idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse'} text-center md:text-left`}>
                {/* Content Block */}
@@ -561,7 +561,7 @@ function LandingPage() {
           <h2 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter opacity-10 absolute inset-0 -top-6 md:-top-10 select-none text-white">ENGINEERING</h2>
           <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter mb-4 relative z-10">Core <span className="text-indigo-500">Architects</span></h2>
           <div className="w-16 md:w-24 h-1 bg-indigo-500 mx-auto rounded-full mb-6" />
-          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.5em]">The Genesis Core Team</p>
+          <p className="text-slate-500 font-bold uppercase text-[9px] md:text-[10px] tracking-[0.5em]">The Resume Builder Team</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 px-4 md:px-0">
@@ -661,11 +661,11 @@ function LandingPage() {
           </div>
           <div className="text-center md:text-right">
             <h5 className="font-black uppercase text-[10px] tracking-[0.4em] text-indigo-400 mb-8 md:mb-10">Project Data</h5>
-            <p className="text-slate-500 font-black uppercase text-[10px] leading-loose">Build: Genesis Core V1.0 <br />Submission: Final 2026</p>
+            <p className="text-slate-500 font-black uppercase text-[10px] leading-loose">Build: Resume Builder V1.0 <br />Submission: Final 2026</p>
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-600 font-black uppercase text-[8px] tracking-[0.6em] md:tracking-[0.8em]">
-            <span>© 2026 ResumeWise Intelligent Systems</span>
+            <span>© 2026 Resume Builder</span>
             <span className="italic underline underline-offset-4 decoration-indigo-500/50">Designed for Excellence</span>
         </div>
       </footer>
